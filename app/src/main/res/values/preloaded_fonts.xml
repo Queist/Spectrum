@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <array name="preloaded_fonts" translatable="false">
+        <item>@font/aclonica</item>
+        <item>@font/acme</item>
+        <item>@font/alex_brush</item>
+        <item>@font/allerta</item>
+        <item>@font/allerta_stencil</item>
+        <item>@font/allura</item>
+        <item>@font/almendra_display</item>
+        <item>@font/arizonia</item>
+        <item>@font/audiowide</item>
+        <item>@font/black_ops_one</item>
+        <item>@font/droid_sans_mono</item>
+        <item>@font/quantico</item>
+    </array>
+</resources>
