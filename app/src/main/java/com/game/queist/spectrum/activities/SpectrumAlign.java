@@ -2,7 +2,6 @@ package com.game.queist.spectrum;
 
 import android.content.Context;
 import android.content.Intent;
-import android.content.pm.ActivityInfo;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Color;
@@ -30,6 +29,8 @@ import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.SeekBar;
+
+import com.game.queist.spectrum.utils.DataManager;
 
 import java.util.ArrayList;
 import java.util.Locale;

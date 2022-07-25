@@ -3,8 +3,6 @@ package com.game.queist.spectrum;
 import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.Intent;
-import android.content.pm.ActivityInfo;
-import android.graphics.BlurMaskFilter;
 import android.graphics.Color;
 import android.graphics.Point;
 import android.media.MediaPlayer;
@@ -18,7 +16,6 @@ import androidx.core.content.ContextCompat;
 
 import android.os.Handler;
 import android.view.LayoutInflater;
-import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewConfiguration;
 import android.view.ViewGroup;
@@ -27,15 +24,17 @@ import android.view.WindowInsetsController;
 import android.view.WindowManager;
 import android.widget.AbsListView;
 import android.widget.BaseAdapter;
-import android.widget.Button;
 import android.widget.FrameLayout;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.SeekBar;
-import android.widget.TableLayout;
 import android.widget.TextView;
+
+import com.game.queist.spectrum.chart.Song;
+import com.game.queist.spectrum.utils.DataManager;
+import com.game.queist.spectrum.utils.Utility;
 
 import java.io.BufferedReader;
 import java.io.InputStream;
@@ -43,7 +42,6 @@ import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Locale;
-import java.util.logging.Level;
 
 public class SongSelect extends AppCompatActivity implements AbsListView.OnScrollListener {
 
@@ -624,81 +622,3 @@ class SelectionAdaptor extends BaseAdapter {
     }
 }
 
-class Song {
-    private String name;
-    private String artist;
-    private int coverID;
-    private int thumbID;
-    private double minBPM, maxBPM;
-    private int[] difficulty;
-    private boolean[] isClicked;
-    private int currentDiff;
-
-    Song (String name, String artist, int coverID, int thumbID, double minBPM, double maxBPM, int[] difficulty) {
-        this.name = name;
-        this.artist = artist;
-        this.coverID = coverID;
-        this.thumbID = thumbID;
-        this.maxBPM = maxBPM;
-        this.minBPM = minBPM;
-        this.difficulty = difficulty;
-        this.isClicked = new boolean[SongSelect.DIFF_NUM];
-        this.currentDiff = -1;
-        for (int i = 0; i<SongSelect.DIFF_NUM; i++) {
-            isClicked[i] = false;
-        }
-    }
-
-    public String getName() { return name; }
-
-    public String getArtist() { return artist; }
-
-    public int getCoverID() { return coverID; }
-
-    public int getThumbID() { return thumbID; }
-
-    public int getDifficulty(int i) { return difficulty[i]; }
-
-    public int getDifficulty() { return difficulty[currentDiff]; }
-
-    public int getDifficultyLength() { return difficulty.length; }
-
-    public String toStringBPM() { return minBPM == maxBPM ? "BPM "+(int)minBPM : "BPM "+(int)minBPM+"~"+(int)maxBPM; }
-
-    public boolean isClicked(int i) {
-        return isClicked[i];
-    }
-
-    /*public void clicked(int i) {
-        isClicked[i] = !isClicked[i];
-    }
-
-    public void resetClicked() {
-        for (int i = 0; i<SongSelect.DIFF_NUM; i++) {
-            isClicked[i] = false;
-        }
-    }
-
-    public int getClickedDifficulty() {
-        for (int i = 0; i<SongSelect.DIFF_NUM; i++) {
-            if (isClicked[i]) {
-                return i;
-            }
-        }
-        return -1;
-    }*/
-
-    public int getCurrentDiff() {
-        return currentDiff;
-    }
-
-    public void changeDiff() {
-        currentDiff = (currentDiff+1)%SongSelect.DIFF_NUM;
-        if (getDifficulty() == -1) changeDiff();
-    }
-
-    public void setCurrentDiff(int i) {
-        currentDiff = i;
-    }
-
-}

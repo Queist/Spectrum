@@ -1,7 +1,6 @@
 package com.game.queist.spectrum;
 
 import android.content.Intent;
-import android.content.pm.ActivityInfo;
 import android.graphics.Point;
 import android.media.MediaPlayer;
 import android.os.Build;
@@ -13,8 +12,9 @@ import android.view.WindowInsetsController;
 import android.view.WindowManager;
 import android.widget.FrameLayout;
 import android.widget.ImageButton;
-import android.widget.LinearLayout;
 import android.widget.SeekBar;
+
+import com.game.queist.spectrum.utils.DataManager;
 
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;

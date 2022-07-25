@@ -1,7 +1,6 @@
 package com.game.queist.spectrum;
 
 import android.content.Intent;
-import android.content.pm.ActivityInfo;
 import android.graphics.Color;
 import android.graphics.Point;
 import android.media.MediaPlayer;
@@ -23,6 +22,8 @@ import android.widget.FrameLayout;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
+
+import com.game.queist.spectrum.utils.DataManager;
 
 public class StartScreen extends AppCompatActivity {
 

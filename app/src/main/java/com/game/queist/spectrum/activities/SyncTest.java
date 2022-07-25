@@ -1,7 +1,6 @@
 package com.game.queist.spectrum;
 
 import android.content.Intent;
-import android.content.pm.ActivityInfo;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.BlurMaskFilter;
@@ -24,6 +23,10 @@ import android.view.WindowManager;
 import android.widget.ImageButton;
 import android.widget.LinearLayout;
 import android.widget.TextView;
+
+import com.game.queist.spectrum.chart.Note;
+import com.game.queist.spectrum.utils.DataManager;
+import com.game.queist.spectrum.utils.Utility;
 
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -55,7 +58,7 @@ public class SyncTest extends AppCompatActivity implements SurfaceHolder.Callbac
     long averageValueRaw, recentValueRaw;
     int count;
     int width, height, offsetX, offsetY;
-    Flag flag;
+    GamePhase gamePhase;
     long start, now, pausedTime;
     double bit;
     int noteCount;
@@ -73,7 +76,7 @@ public class SyncTest extends AppCompatActivity implements SurfaceHolder.Callbac
                 ev.getY() < linearLayout.getY() || ev.getY() > linearLayout.getY() + linearLayout.getHeight())
             return super.dispatchTouchEvent(ev);
         if (ev.getX(ev.getActionIndex()) - linearLayout.getX() > linearLayout.getWidth() * 3.0 / 4) return super.dispatchTouchEvent(ev);
-        if (flag.getFlag() == Flag.START) return super.dispatchTouchEvent(ev);
+        if (gamePhase.getFlag() == GamePhase.START) return super.dispatchTouchEvent(ev);
         if (ev.getActionMasked() == MotionEvent.ACTION_DOWN || ev.getActionMasked() == MotionEvent.ACTION_POINTER_DOWN)
             tabTouch(ev.getX(ev.getActionIndex()), ev.getY(ev.getActionIndex()));
         return super.dispatchTouchEvent(ev);
@@ -152,7 +155,7 @@ public class SyncTest extends AppCompatActivity implements SurfaceHolder.Callbac
         metronom = new ArrayList<>();
 
         finishFlag = false;
-        flag = new Flag();
+        gamePhase = new GamePhase();
         surfaceSync = findViewById(R.id.surfaceSync);
         syncTestBack = findViewById(R.id.syncTestBack);
         recentDT = findViewById(R.id.recentDT);
@@ -209,7 +212,7 @@ public class SyncTest extends AppCompatActivity implements SurfaceHolder.Callbac
         });
 
         syncTestBack.setOnClickListener((view) -> {
-            flag.setFlag(Flag.QUIT);
+            gamePhase.setFlag(GamePhase.QUIT);
             tapSound.start();
             DataManager.getData(this).setOffset(syncValue);
             bgm.release();
@@ -291,14 +294,14 @@ public class SyncTest extends AppCompatActivity implements SurfaceHolder.Callbac
     public void surfaceCreated(@NonNull SurfaceHolder holder) {
         thread = new Thread(() -> {
             surfaceSync.getHolder().setFormat(PixelFormat.RGBA_8888);
-            while (flag.getFlag() != Flag.QUIT) {
-                switch (flag.getFlag()) {
-                    case Flag.START:
+            while (gamePhase.getFlag() != GamePhase.QUIT) {
+                switch (gamePhase.getFlag()) {
+                    case GamePhase.START:
                         start();
                         start = System.nanoTime();
                         bgm.start();
                         break;
-                    case Flag.PLAY:
+                    case GamePhase.PLAY:
                         play();
                         break;
                     default:
@@ -335,7 +338,7 @@ public class SyncTest extends AppCompatActivity implements SurfaceHolder.Callbac
         } finally {
             if (canvas != null) surfaceSync.getHolder().unlockCanvasAndPost(canvas);
         }
-        flag.setFlag(Flag.PLAY);
+        gamePhase.setFlag(GamePhase.PLAY);
     }
 
     private void play() {
@@ -352,8 +355,8 @@ public class SyncTest extends AppCompatActivity implements SurfaceHolder.Callbac
         } finally {
             if (canvas != null) surfaceSync.getHolder().unlockCanvasAndPost(canvas);
         }
-        if (flag.getFlag() != Flag.QUIT && bit * 1000000000 / 2 > (long) bgm.getDuration()*1000000) {
-            flag.setFlag(Flag.END);
+        if (gamePhase.getFlag() != GamePhase.QUIT && bit * 1000000000 / 2 > (long) bgm.getDuration()*1000000) {
+            gamePhase.setFlag(GamePhase.END);
         }
     }
 
