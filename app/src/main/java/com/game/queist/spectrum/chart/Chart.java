@@ -1,6 +1,8 @@
-package com.game.queist.spectrum;
+package com.game.queist.spectrum.chart;
 
 import android.util.Pair;
+
+import com.game.queist.spectrum.activities.PlayScreen;
 
 import java.io.BufferedReader;
 import java.io.InputStream;
@@ -37,7 +39,7 @@ public class Chart {
     private int offset;
     static Comparator<BitObject> sortToBit = (b1, b2) -> Double.compare(b1.getBit(), b2.getBit());
 
-    Chart(InputStream chartFile) {
+    public Chart(InputStream chartFile) {
         totalNotes = 0;
         notes = new ArrayList[PlayScreen.SIDE_NUM];
         for (int i=0; i<PlayScreen.SIDE_NUM; i++) notes[i] = new ArrayList<>();
@@ -157,62 +159,6 @@ public class Chart {
     public int getOffset() { return offset; }
 
 
-}
-
-abstract class BitObject {
-    private double bit;
-
-    public BitObject(double bit) {
-        this.bit = bit;
-    }
-
-    double getBit() { return bit; }
-
-    boolean equals(BitObject bo) {
-        return bo.bit == this.bit;
-    }
-}
-
-class BPM extends BitObject {
-    private double value;
-
-    BPM (double value, double bit) {
-        super(bit);
-        this.value = value;
-    }
-
-    public double getValue() { return value; }
-
-}
-
-class Note extends BitObject {
-    private String kind;
-    private double pos1;
-    private double pos2;
-    private int color; //Color color;
-    public final static String SLIDE = "Slide";
-    public final static String TAB = "Tab";
-    public final static String AUTO = "Auto";
-
-    Note (String kind, double pos1, double bit, double pos2, int color) {
-        super(bit);
-        this.kind = kind;
-        this.pos1 = pos1;
-        this.pos2 = pos2;
-        this.color = color;
-    }
-
-    public String getKind() { return kind; }
-
-    public double getPosition1() { return pos1; }
-
-    public double getPosition2() { return pos2; }
-
-    public int getColor() { return color; }
-
-    public boolean equals(Note note) {
-        return (super.equals(note) && note.kind.equals(this.kind) && note.pos1 == this.pos1 && note.pos2 == this.pos2 && note.color == this.color);
-    }
 }
 
 /*class Flip extends Note {

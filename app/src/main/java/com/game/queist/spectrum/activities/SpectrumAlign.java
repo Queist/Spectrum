@@ -1,4 +1,4 @@
-package com.game.queist.spectrum;
+package com.game.queist.spectrum.activities;
 
 import android.content.Context;
 import android.content.Intent;
@@ -30,6 +30,7 @@ import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.SeekBar;
 
+import com.game.queist.spectrum.R;
 import com.game.queist.spectrum.utils.DataManager;
 
 import java.util.ArrayList;

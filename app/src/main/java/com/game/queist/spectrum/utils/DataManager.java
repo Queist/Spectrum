@@ -1,4 +1,4 @@
-package com.game.queist.spectrum;
+package com.game.queist.spectrum.utils;
 
 import android.content.Context;
 import android.content.SharedPreferences;
@@ -9,12 +9,12 @@ public class DataManager {
         return new Data(context);
     }
 
-    static class Data {
+    public static class Data {
 
         private SharedPreferences sharedPreferences;
 
 
-        Data(Context context) {
+        public Data(Context context) {
             sharedPreferences = context.getSharedPreferences("data", Context.MODE_PRIVATE);
         }
 

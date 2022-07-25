@@ -1,4 +1,4 @@
-package com.game.queist.spectrum;
+package com.game.queist.spectrum.activities;
 
 import android.content.Intent;
 import android.graphics.Bitmap;
@@ -24,8 +24,10 @@ import android.widget.ImageButton;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
+import com.game.queist.spectrum.R;
 import com.game.queist.spectrum.chart.Note;
 import com.game.queist.spectrum.utils.DataManager;
+import com.game.queist.spectrum.utils.GamePhase;
 import com.game.queist.spectrum.utils.Utility;
 
 import java.util.ArrayList;

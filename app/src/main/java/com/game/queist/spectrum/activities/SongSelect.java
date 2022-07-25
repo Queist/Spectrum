@@ -1,4 +1,4 @@
-package com.game.queist.spectrum;
+package com.game.queist.spectrum.activities;
 
 import android.annotation.SuppressLint;
 import android.content.Context;
@@ -32,6 +32,7 @@ import android.widget.ListView;
 import android.widget.SeekBar;
 import android.widget.TextView;
 
+import com.game.queist.spectrum.R;
 import com.game.queist.spectrum.chart.Song;
 import com.game.queist.spectrum.utils.DataManager;
 import com.game.queist.spectrum.utils.Utility;

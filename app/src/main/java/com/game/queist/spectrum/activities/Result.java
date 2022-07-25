@@ -1,4 +1,4 @@
-package com.game.queist.spectrum;
+package com.game.queist.spectrum.activities;
 
 import android.content.Intent;
 import android.graphics.Point;
@@ -18,6 +18,7 @@ import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
+import com.game.queist.spectrum.R;
 import com.game.queist.spectrum.utils.DataManager;
 import com.game.queist.spectrum.utils.Utility;
 

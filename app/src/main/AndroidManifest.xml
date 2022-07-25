@@ -15,7 +15,7 @@
         android:theme="@style/Theme.AppCompat.NoActionBar"
         android:windowLayoutInDisplayCutoutMode = "shortEdges"
         tools:targetApi="o_mr1">
-        <activity android:name=".Logo"
+        <activity android:name=".activities.Logo"
             android:screenOrientation="sensorLandscape"
             tools:ignore="LockedOrientationActivity">
             <intent-filter>
@@ -23,24 +23,27 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-        <activity android:name=".StartScreen"
+        <activity android:name=".activities.StartScreen"
             android:screenOrientation="sensorLandscape"/>
-        <activity android:name=".SongSelect"
+        <activity android:name=".activities.SongSelect"
             android:screenOrientation="sensorLandscape"/>
-        <activity android:name=".PlayScreen"
+        <activity android:name=".activities.PlayScreen"
             android:screenOrientation="sensorLandscape"/>
-        <activity android:name=".Result"
+        <activity android:name=".activities.Result"
             android:screenOrientation="sensorLandscape"/>
-        <activity android:name=".SyncTest"
+        <activity android:name=".activities.SyncTest"
             android:screenOrientation="sensorLandscape"/>
-        <activity android:name=".SpectrumAlign"
+        <activity android:name=".activities.SpectrumAlign"
             android:screenOrientation="sensorLandscape"/>
-        <activity android:name=".Volume"
+        <activity android:name=".activities.Volume"
             android:screenOrientation="sensorLandscape"/>
 
         <meta-data
             android:name="preloaded_fonts"
             android:resource="@array/preloaded_fonts" />
     </application>
+
+    <!-- Tell the system this app requires OpenGL ES 3.0. -->
+    <uses-feature android:glEsVersion="0x00030000" android:required="true" />
 
 </manifest>

@@ -1,19 +1,21 @@
-package com.game.queist.spectrum;
+package com.game.queist.spectrum.utils;
 
 import android.animation.ValueAnimator;
 import android.content.Context;
 import android.graphics.BlurMaskFilter;
 import android.graphics.Color;
 import android.media.MediaPlayer;
-import android.os.Build;
-import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
+
+import com.game.queist.spectrum.chart.EffectFlag;
+import com.game.queist.spectrum.activities.PlayScreen;
+import com.game.queist.spectrum.chart.Note;
 
 import java.util.ArrayList;
 import java.util.Locale;
 
-class Utility {
+public class Utility {
     public static double screenRate = 0;
     private static int[] color = new int[PlayScreen.SIDE_NUM];
     private static float[] saturation = new float[PlayScreen.SIDE_NUM];

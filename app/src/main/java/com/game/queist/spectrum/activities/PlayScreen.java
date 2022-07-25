@@ -1,4 +1,4 @@
-package com.game.queist.spectrum;
+package com.game.queist.spectrum.activities;
 
 import android.content.Intent;
 import android.graphics.Bitmap;
@@ -32,13 +32,12 @@ import android.widget.ImageButton;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
-import com.game.queist.spectrum.activities.Result;
-import com.game.queist.spectrum.activities.SongSelect;
-import com.game.queist.spectrum.activities.SpectrumAlign;
+import com.game.queist.spectrum.R;
 import com.game.queist.spectrum.chart.Chart;
 import com.game.queist.spectrum.chart.EffectFlag;
 import com.game.queist.spectrum.chart.Note;
 import com.game.queist.spectrum.utils.DataManager;
+import com.game.queist.spectrum.utils.GamePhase;
 import com.game.queist.spectrum.utils.Utility;
 
 import java.util.ArrayList;
@@ -1246,23 +1245,3 @@ public class PlayScreen extends AppCompatActivity implements GLSurfaceView.Rende
     }
 }
 
-class GamePhase {
-    public static final int START = 0;
-    public static final int PAUSE = 1;
-    public static final int END = 2;
-    public static final int PLAY = 3;
-    public static final int QUIT = 4;
-    private int flag;
-
-    public GamePhase() {
-        this.flag = START;
-    }
-
-    public int getFlag() {
-        return this.flag;
-    }
-
-    public void setFlag(int flag) {
-        this.flag = flag;
-    }
-}

@@ -1,5 +1,5 @@
 #pragma version(1)
-#pragma rs java_package_name(com.game.queist.spectrum)
+#pragma rs java_package_name(com.game.queist.spectrum.activities)
 #pragma rs_fp_relaxed
 
 float saturation;

@@ -1,4 +1,4 @@
-package com.game.queist.spectrum;
+package com.game.queist.spectrum.activities;
 
 import android.content.Intent;
 import android.graphics.Point;
@@ -12,6 +12,7 @@ import android.view.WindowInsetsController;
 import android.view.WindowManager;
 import android.widget.LinearLayout;
 
+import com.game.queist.spectrum.R;
 import com.game.queist.spectrum.activities.StartScreen;
 
 import androidx.annotation.Nullable;
