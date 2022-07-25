@@ -1,6 +1,7 @@
 package com.game.queist.spectrum;
 
 import android.content.Intent;
+import android.content.pm.ActivityInfo;
 import android.graphics.Point;
 import android.os.Build;
 import android.os.Bundle;
@@ -11,8 +12,6 @@ import android.view.WindowInsets;
 import android.view.WindowInsetsController;
 import android.view.WindowManager;
 import android.widget.LinearLayout;
-
-import com.game.queist.spectrum.activities.StartScreen;
 
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;

@@ -1,6 +1,7 @@
 package com.game.queist.spectrum;
 
 import android.content.Intent;
+import android.content.pm.ActivityInfo;
 import android.graphics.Point;
 import android.media.MediaPlayer;
 import android.os.Build;
@@ -18,14 +19,12 @@ import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
-import com.game.queist.spectrum.utils.DataManager;
-import com.game.queist.spectrum.utils.Utility;
-
 import java.util.Locale;
 
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityOptionsCompat;
+import androidx.core.content.ContextCompat;
 
 public class Result extends AppCompatActivity {
 
@@ -138,7 +137,7 @@ public class Result extends AppCompatActivity {
         resultSongName.setText(songName);
         int ID = getResources().getIdentifier("result_"+difficulty.toLowerCase(), "drawable", this.getPackageName());
         resultDifficulty.setImageResource(ID);
-        ID = getResources().getIdentifier("result_"+ Utility.scoreToRank(score), "drawable", this.getPackageName());
+        ID = getResources().getIdentifier("result_"+Utility.scoreToRank(score), "drawable", this.getPackageName());
         System.out.println("\t\t\t"+Utility.scoreToRank(score));
         resultRank.setImageResource(ID);
         resultCover.setImageResource(coverID);
