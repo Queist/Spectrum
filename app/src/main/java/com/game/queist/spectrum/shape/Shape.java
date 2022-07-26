@@ -57,6 +57,12 @@ public abstract class Shape {
     }
 
     protected abstract void initBufferResources();
+    public void enableBuffer() {
+
+    }
+    public void disableBuffer() {
+
+    }
     public void draw(int startOffset, int length) {
         GLES30.glFrontFace(GLES30.GL_CCW);
         /*gl.glFrontFace(GL10.GL_CCW);
@@ -84,5 +90,5 @@ public abstract class Shape {
         gl.glDisableClientState(GL10.GL_NORMAL_ARRAY);
         gl.glDisableClientState(GL10.GL_TEXTURE_COORD_ARRAY);
         gl.glDisable(GL10.GL_CULL_FACE);*/
-    };
+    }
 }

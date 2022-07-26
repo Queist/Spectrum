@@ -6,11 +6,11 @@ public class ShapeUtils {
       float[] vertices = new float[(LEVEL_OF_DETAIL + 1) * 2 * 3];
       for (int i = 0; i < LEVEL_OF_DETAIL + 1; i++) {
          vertices[6 * i    ] = (float)Math.cos(2 * Math.PI / LEVEL_OF_DETAIL * i) * radius;
-         vertices[6 * i + 1] = width/2;
-         vertices[6 * i + 2] = (float)Math.sin(2 * Math.PI / LEVEL_OF_DETAIL * i) * radius;
+         vertices[6 * i + 1] = (float)Math.sin(2 * Math.PI / LEVEL_OF_DETAIL * i) * radius;
+         vertices[6 * i + 2] = width/2;
          vertices[6 * i + 3] = (float)Math.cos(2 * Math.PI / LEVEL_OF_DETAIL * i) * radius;
-         vertices[6 * i + 4] = -width/2;
-         vertices[6 * i + 5] = (float)Math.sin(2 * Math.PI / LEVEL_OF_DETAIL * i) * radius;
+         vertices[6 * i + 4] = (float)Math.sin(2 * Math.PI / LEVEL_OF_DETAIL * i) * radius;
+         vertices[6 * i + 5] = -width/2;
       }
       return vertices;
    }
@@ -45,11 +45,11 @@ public class ShapeUtils {
       float[] normals = new float[(LEVEL_OF_DETAIL + 1) * 2 * 3];
       for (int i = 0; i < LEVEL_OF_DETAIL + 1; i++) {
          normals[6 * i    ] = -(float)Math.cos(2 * Math.PI / LEVEL_OF_DETAIL * i);
-         normals[6 * i + 1] = 0;
-         normals[6 * i + 2] = -(float)Math.sin(2 * Math.PI / LEVEL_OF_DETAIL * i);
+         normals[6 * i + 1] = -(float)Math.sin(2 * Math.PI / LEVEL_OF_DETAIL * i);
+         normals[6 * i + 2] = 0;
          normals[6 * i + 3] = -(float)Math.cos(2 * Math.PI / LEVEL_OF_DETAIL * i);
-         normals[6 * i + 4] = 0;
-         normals[6 * i + 5] = -(float)Math.sin(2 * Math.PI / LEVEL_OF_DETAIL * i);
+         normals[6 * i + 4] = -(float)Math.sin(2 * Math.PI / LEVEL_OF_DETAIL * i);
+         normals[6 * i + 5] = 0;
       }
       return normals;
    }
@@ -57,11 +57,16 @@ public class ShapeUtils {
    public static float[] buildCylinderTexCoords() {
       float[] texCoords = new float[(LEVEL_OF_DETAIL + 1) * 2 * 2];
       for (int i = 0; i < LEVEL_OF_DETAIL; i++) {
-         texCoords[4 * i    ] = 1.0f / LEVEL_OF_DETAIL * i;
+         texCoords[4 * i    ] = 1.f / LEVEL_OF_DETAIL * i;
          texCoords[4 * i + 1] = 1.f;
-         texCoords[4 * i + 2] = 1.0f / LEVEL_OF_DETAIL * i;
+         texCoords[4 * i + 2] = 1.f / LEVEL_OF_DETAIL * i;
          texCoords[4 * i + 3] = 0.f;
       }
       return texCoords;
+   }
+
+   public static float[] buildDisk() {
+      /*TODO*/
+      return new float[0];
    }
 }
