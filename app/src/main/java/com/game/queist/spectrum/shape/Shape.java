@@ -1,5 +1,7 @@
 package com.game.queist.spectrum.shape;
 
+import android.opengl.GLES30;
+
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.FloatBuffer;
@@ -55,8 +57,9 @@ public abstract class Shape {
     }
 
     protected abstract void initBufferResources();
-    public void draw(GL10 gl, int startOffset, int length) {
-        gl.glFrontFace(GL10.GL_CCW);
+    public void draw(int startOffset, int length) {
+        GLES30.glFrontFace(GLES30.GL_CCW);
+        /*gl.glFrontFace(GL10.GL_CCW);
         gl.glEnable(GL10.GL_CULL_FACE);
         gl.glEnableClientState(GL10.GL_VERTEX_ARRAY);
         gl.glEnableClientState(GL10.GL_COLOR_ARRAY);
@@ -80,6 +83,6 @@ public abstract class Shape {
         gl.glDisableClientState(GL10.GL_COLOR_ARRAY);
         gl.glDisableClientState(GL10.GL_NORMAL_ARRAY);
         gl.glDisableClientState(GL10.GL_TEXTURE_COORD_ARRAY);
-        gl.glDisable(GL10.GL_CULL_FACE);
+        gl.glDisable(GL10.GL_CULL_FACE);*/
     };
 }

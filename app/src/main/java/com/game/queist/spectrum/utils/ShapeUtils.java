@@ -1,7 +1,7 @@
 package com.game.queist.spectrum.utils;
 
 public class ShapeUtils {
-   public static int LEVEL_OF_DETAIL = 25;
+   public static int LEVEL_OF_DETAIL = 40;
    public static float[] buildCylinderVertices(float radius, float width) {
       float[] vertices = new float[(LEVEL_OF_DETAIL + 1) * 2 * 3];
       for (int i = 0; i < LEVEL_OF_DETAIL + 1; i++) {
