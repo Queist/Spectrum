@@ -2,6 +2,7 @@ package com.game.queist.spectrum.shape;
 
 import android.opengl.GLES30;
 
+import com.game.queist.spectrum.R;
 import com.game.queist.spectrum.utils.Utility;
 
 import java.nio.ByteBuffer;

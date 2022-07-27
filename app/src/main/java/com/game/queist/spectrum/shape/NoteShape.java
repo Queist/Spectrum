@@ -1,10 +1,6 @@
 package com.game.queist.spectrum.shape;
 
-import android.opengl.Matrix;
-
 import com.game.queist.spectrum.utils.ShapeUtils;
-
-import javax.microedition.khronos.opengles.GL10;
 
 import androidx.annotation.IntRange;
 
@@ -26,7 +22,7 @@ public class NoteShape extends Shape {
 
    @Override
    protected void initBufferResources() {
-      vertices = ShapeUtils.buildCylinderVertices(radius, width);
+      vertices = ShapeUtils.buildCylinderPositions(radius, width);
       indices = ShapeUtils.buildCylinderIndices();
       colors = ShapeUtils.buildCylinderColors();
       normals = ShapeUtils.buildCylinderNormals();

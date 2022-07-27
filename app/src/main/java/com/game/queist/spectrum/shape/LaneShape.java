@@ -20,7 +20,7 @@ public class LaneShape extends Shape {
 
    @Override
    protected void initBufferResources() {
-      vertices = ShapeUtils.buildCylinderVertices(radius, width);
+      vertices = ShapeUtils.buildCylinderPositions(radius, width);
       indices = ShapeUtils.buildCylinderIndices();
       colors = ShapeUtils.buildCylinderColors();
       normals = ShapeUtils.buildCylinderNormals();
