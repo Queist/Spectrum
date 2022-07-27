@@ -65,7 +65,7 @@ public class ShapeUtils {
       return texCoords;
    }
 
-   public static float[] buildDisk() {
+   public static float[] buildDiskVertex() {
       /*TODO*/
       return new float[0];
    }

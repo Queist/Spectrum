@@ -33,6 +33,11 @@ public class NoteShape extends Shape {
       texCoords = ShapeUtils.buildCylinderTexCoords();
    }
 
+   @Override
+   protected void initShader() {
+
+   }
+
    public void draw(@IntRange(from=0, to=3) int quadrant, double start, double end) {
       if (quadrant%2 == 0) {
          draw(

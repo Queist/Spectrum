@@ -5,6 +5,8 @@ import android.content.Context;
 import android.graphics.BlurMaskFilter;
 import android.graphics.Color;
 import android.media.MediaPlayer;
+import android.opengl.GLES30;
+import android.util.Log;
 import android.widget.Button;
 import android.widget.TextView;
 
@@ -12,6 +14,9 @@ import com.game.queist.spectrum.chart.EffectFlag;
 import com.game.queist.spectrum.activities.PlayScreen;
 import com.game.queist.spectrum.chart.Note;
 
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
+import java.nio.IntBuffer;
 import java.util.ArrayList;
 import java.util.Locale;
 
@@ -198,6 +203,7 @@ public class Utility {
         if (rate == 0) textView.getPaint().setMaskFilter(null);
         else textView.getPaint().setMaskFilter(new BlurMaskFilter(textView.getTextSize()/rate, BlurMaskFilter.Blur.SOLID));
     }
+
     public static String scoreToRank(int score) {
         //360*324
         //2700->1152->810->360
@@ -218,5 +224,42 @@ public class Utility {
         } else {
             return "rank_f";
         }
+    }
+
+    public static int loadShader(int type, String shaderCode) {
+        // 빈 쉐이더를 생성하고 그 인덱스를 할당.
+        int shader = GLES30.glCreateShader(type);
+
+        // *컴파일 결과를 받을 공간을 생성.
+        IntBuffer compiled = ByteBuffer.allocateDirect(4).order(ByteOrder.nativeOrder()).asIntBuffer();
+        String shaderType;
+
+        // *컴파일 결과를 출력하기 위해 쉐이더를 구분.
+        if(type == GLES30.GL_VERTEX_SHADER)
+            shaderType = "Vertex";
+        else if(type == GLES30.GL_FRAGMENT_SHADER)
+            shaderType = "Fragment";
+        else
+            shaderType = "Unknown";
+
+        // 빈 쉐이더에 소스코드를 할당.
+        GLES30.glShaderSource(shader, shaderCode);
+        // 쉐이더에 저장 된 소스코드를 컴파일
+        GLES30.glCompileShader(shader);
+
+        // *컴파일 결과 오류가 발생했는지를 확인.
+        GLES30.glGetShaderiv(shader, GLES30.GL_COMPILE_STATUS, compiled);
+        // *컴파일 에러가 발생했을 경우 이를 출력.
+        if(compiled.get(0) == 0) {
+            GLES30.glGetShaderiv(shader,GLES30.GL_INFO_LOG_LENGTH,compiled);
+            if (compiled.get(0) > 1){
+                Log.e("Shader", shaderType + " shader: " + GLES30.glGetShaderInfoLog(shader));
+            }
+            GLES30.glDeleteShader(shader);
+            Log.e("Shader", shaderType + " shader compile error.");
+        }
+
+        // 완성된 쉐이더의 인덱스를 리턴.
+        return shader;
     }
 }

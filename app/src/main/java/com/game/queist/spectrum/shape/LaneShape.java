@@ -26,4 +26,9 @@ public class LaneShape extends Shape {
       normals = ShapeUtils.buildCylinderNormals();
       texCoords = ShapeUtils.buildCylinderTexCoords();
    }
+
+   @Override
+   protected void initShader() {
+
+   }
 }

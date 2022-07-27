@@ -2,6 +2,8 @@ package com.game.queist.spectrum.shape;
 
 import android.opengl.GLES30;
 
+import com.game.queist.spectrum.utils.Utility;
+
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.FloatBuffer;
@@ -10,11 +12,18 @@ import java.nio.ShortBuffer;
 import javax.microedition.khronos.opengles.GL10;
 
 public abstract class Shape {
-    protected FloatBuffer vertexBuffer;
-    protected FloatBuffer colorBuffer;
-    protected FloatBuffer normalBuffer;
-    protected FloatBuffer texCoordsBuffer;
-    protected ShortBuffer indexBuffer;
+    private static final int COORDS_PER_VERTEX = 11;
+
+    private final int program;
+
+    private String vertexShader;
+    private String fragmentShader;
+
+    private FloatBuffer vertexBuffer;
+    private FloatBuffer colorBuffer;
+    private FloatBuffer normalBuffer;
+    private FloatBuffer texCoordsBuffer;
+    private ShortBuffer indexBuffer;
 
     protected float[] vertices;
     protected float[] colors;
@@ -24,6 +33,7 @@ public abstract class Shape {
 
     public Shape() {
         initBufferResources();
+        initShader();
 
         ByteBuffer vbb = ByteBuffer.allocateDirect(vertices.length * 4);
         vbb.order(ByteOrder.nativeOrder());
@@ -54,9 +64,28 @@ public abstract class Shape {
         indexBuffer = ibb.asShortBuffer();
         indexBuffer.put(indices);
         indexBuffer.position(0);
+
+        int vertexShaderIndex = Utility.loadShader(GLES30.GL_VERTEX_SHADER,
+                vertexShader);
+        int fragmentShaderIndex = Utility.loadShader(GLES30.GL_FRAGMENT_SHADER,
+                fragmentShader);
+
+        program = GLES30.glCreateProgram();
+        GLES30.glAttachShader(program, vertexShaderIndex);
+        GLES30.glAttachShader(program, fragmentShaderIndex);
+        GLES30.glLinkProgram(program);
     }
 
+    /**
+     * initialize buffer-array
+     */
     protected abstract void initBufferResources();
+
+    /**
+     * initialize shader
+     */
+    protected abstract void initShader();
+
     public void enableBuffer() {
 
     }
@@ -64,7 +93,19 @@ public abstract class Shape {
 
     }
     public void draw(int startOffset, int length) {
+        GLES30.glUseProgram(program);
         GLES30.glFrontFace(GLES30.GL_CCW);
+        GLES30.glEnable(GL10.GL_CULL_FACE);
+
+        int positionHandle = GLES30.glGetAttribLocation(program, "position");
+        GLES30.glEnableVertexAttribArray(positionHandle);
+        GLES30.glVertexAttribPointer(positionHandle, COORDS_PER_VERTEX, GLES30.GL_FLOAT, false, COORDS_PER_VERTEX * 4, vertexBuffer);
+
+        /**
+         * TODO : bind constant buffer
+         */
+
+        GLES30.glDrawRangeElements(GLES30.GL_TRIANGLES, startOffset, startOffset + length, length / 3, GLES30.GL_SHORT, indexBuffer);
         /*gl.glFrontFace(GL10.GL_CCW);
         gl.glEnable(GL10.GL_CULL_FACE);
         gl.glEnableClientState(GL10.GL_VERTEX_ARRAY);
@@ -90,5 +131,14 @@ public abstract class Shape {
         gl.glDisableClientState(GL10.GL_NORMAL_ARRAY);
         gl.glDisableClientState(GL10.GL_TEXTURE_COORD_ARRAY);
         gl.glDisable(GL10.GL_CULL_FACE);*/
+    }
+
+
+    protected void setVertexShader(String vertexShader) {
+        this.vertexShader = vertexShader;
+    }
+
+    protected void setFragmentShader(String fragmentShader) {
+        this.fragmentShader = fragmentShader;
     }
 }
