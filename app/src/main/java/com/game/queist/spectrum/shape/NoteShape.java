@@ -35,8 +35,8 @@ public class NoteShape extends Shape {
 
    }
 
-   public void draw(@IntRange(from=0, to=3) int quadrant, double start, double end) {
-      if (quadrant%2 == 0) {
+   public void draw(@IntRange(from=0, to=3) int[] quadrant, double[] start, double[] end, double[] z) {
+      /*if (quadrant%2 == 0) {
          draw(
                  (int)(((indices.length - 6) / 24) * quadrant + ((indices.length - 6) / 240) * (10 - end)) * 6,
                  (int)(((indices.length - 6) / 240) * (end - start)) * 6 + 6);
@@ -45,6 +45,6 @@ public class NoteShape extends Shape {
          draw(
                  (int)(((indices.length - 6) / 24) * quadrant + ((indices.length - 6) / 240) * start) * 6,
                  (int)(((indices.length - 6) / 240) * (end - start)) * 6 + 6);
-      }
+      }*/
    }
 }

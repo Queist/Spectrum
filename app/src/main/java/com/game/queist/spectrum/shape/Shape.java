@@ -1,6 +1,7 @@
 package com.game.queist.spectrum.shape;
 
 import android.opengl.GLES30;
+import android.opengl.Matrix;
 
 import com.game.queist.spectrum.utils.Utility;
 
@@ -9,11 +10,12 @@ import java.nio.ByteOrder;
 import java.nio.FloatBuffer;
 import java.nio.ShortBuffer;
 
+import javax.microedition.khronos.opengles.GL;
 import javax.microedition.khronos.opengles.GL10;
 
 public abstract class Shape {
 
-    private final int program;
+    private int program;
 
     private String vertexShader;
     private String fragmentShader;
@@ -30,6 +32,11 @@ public abstract class Shape {
     protected float[] texCoords;
     protected short[] indices;
 
+    protected float[][] worlds;
+
+    private static float[] view;
+    private static float[] proj;
+
     public Shape() {
         initBufferResources();
         initShader();
@@ -41,20 +48,20 @@ public abstract class Shape {
         positionBuffer.position(0);
 
         ByteBuffer cbb = ByteBuffer.allocateDirect(colors.length * 4);
-        vbb.order(ByteOrder.nativeOrder());
-        colorBuffer = vbb.asFloatBuffer();
+        cbb.order(ByteOrder.nativeOrder());
+        colorBuffer = cbb.asFloatBuffer();
         colorBuffer.put(colors);
         colorBuffer.position(0);
 
         ByteBuffer nbb = ByteBuffer.allocateDirect(normals.length * 4);
-        vbb.order(ByteOrder.nativeOrder());
-        normalBuffer = vbb.asFloatBuffer();
+        nbb.order(ByteOrder.nativeOrder());
+        normalBuffer = nbb.asFloatBuffer();
         normalBuffer.put(normals);
         normalBuffer.position(0);
 
         ByteBuffer tbb = ByteBuffer.allocateDirect(texCoords.length * 4);
-        vbb.order(ByteOrder.nativeOrder());
-        texCoordsBuffer = vbb.asFloatBuffer();
+        tbb.order(ByteOrder.nativeOrder());
+        texCoordsBuffer = tbb.asFloatBuffer();
         texCoordsBuffer.put(texCoords);
         texCoordsBuffer.position(0);
 
@@ -63,6 +70,7 @@ public abstract class Shape {
         indexBuffer = ibb.asShortBuffer();
         indexBuffer.put(indices);
         indexBuffer.position(0);
+
 
         int vertexShaderIndex = Utility.loadShader(GLES30.GL_VERTEX_SHADER,
                 vertexShader);
@@ -73,6 +81,10 @@ public abstract class Shape {
         GLES30.glAttachShader(program, vertexShaderIndex);
         GLES30.glAttachShader(program, fragmentShaderIndex);
         GLES30.glLinkProgram(program);
+
+        GLES30.glUseProgram(program);
+        GLES30.glFrontFace(GLES30.GL_CCW);
+        GLES30.glEnable(GL10.GL_CULL_FACE);
     }
 
     /**
@@ -85,63 +97,64 @@ public abstract class Shape {
      */
     protected abstract void initShader();
 
-    public void enableBuffer() {
-
+    public static void setCamara(float[] camPosition, float[] target) {
+        Matrix.setLookAtM(view, 0,
+                camPosition[0], camPosition[1], camPosition[2],
+                target[0], target[1], target[2],
+                0, 1, 0);
     }
-    public void disableBuffer() {
 
+    public static void setProj(float fovy, float aspect, float near, float far) {
+        Matrix.perspectiveM(proj, 0, fovy, aspect, near, far);
     }
-    public void draw(int startOffset, int length) {
-        GLES30.glUseProgram(program);
-        GLES30.glFrontFace(GLES30.GL_CCW);
-        GLES30.glEnable(GL10.GL_CULL_FACE);
 
+    public void setWorlds(float[][] worlds) {
+        this.worlds = worlds;
+    }
+
+    private void bindVerticesAndIndices() {
         int positionHandle = GLES30.glGetAttribLocation(program, "position");
         GLES30.glEnableVertexAttribArray(positionHandle);
-        GLES30.glVertexAttribPointer(positionHandle, 3, GLES30.GL_FLOAT, false, 3 * 4, positionBuffer);
+        GLES30.glVertexAttribPointer(positionHandle, 3, GLES30.GL_FLOAT, false, 3 * Float.BYTES, positionBuffer);
 
         int colorHandle = GLES30.glGetAttribLocation(program, "color");
         GLES30.glEnableVertexAttribArray(colorHandle);
-        GLES30.glVertexAttribPointer(colorHandle, 3, GLES30.GL_FLOAT, false, 3 * 4, colorBuffer);
+        GLES30.glVertexAttribPointer(colorHandle, 3, GLES30.GL_FLOAT, false, 3 * Float.BYTES, colorBuffer);
 
         int normalHandle = GLES30.glGetAttribLocation(program, "normal");
         GLES30.glEnableVertexAttribArray(normalHandle);
-        GLES30.glVertexAttribPointer(normalHandle, 3, GLES30.GL_FLOAT, false, 3 * 4, normalBuffer);
+        GLES30.glVertexAttribPointer(normalHandle, 3, GLES30.GL_FLOAT, false, 3 * Float.BYTES, normalBuffer);
 
         int texCoordsHandle = GLES30.glGetAttribLocation(program, "texCoords");
         GLES30.glEnableVertexAttribArray(texCoordsHandle);
-        GLES30.glVertexAttribPointer(texCoordsHandle, 2, GLES30.GL_FLOAT, false, 2 * 4, texCoordsBuffer);
+        GLES30.glVertexAttribPointer(texCoordsHandle, 2, GLES30.GL_FLOAT, false, 2 * Float.BYTES, texCoordsBuffer);
+    }
 
-        /**
-         * TODO : bind constant buffer
-         */
+    protected void bindObjectPerCB(int i) {
+        int worldHandle = GLES30.glGetUniformLocation(program, "world");
+        GLES30.glUniformMatrix4fv(worldHandle, 1, false, worlds[i], 0);
+    }
 
-        GLES30.glDrawRangeElements(GLES30.GL_TRIANGLES, startOffset, startOffset + length, length / 3, GLES30.GL_SHORT, indexBuffer);
-        /*gl.glFrontFace(GL10.GL_CCW);
-        gl.glEnable(GL10.GL_CULL_FACE);
-        gl.glEnableClientState(GL10.GL_VERTEX_ARRAY);
-        gl.glEnableClientState(GL10.GL_COLOR_ARRAY);
-        gl.glEnableClientState(GL10.GL_NORMAL_ARRAY);
-        gl.glEnableClientState(GL10.GL_TEXTURE_COORD_ARRAY);
+    private void bindMainPassCB() {
+        int viewHandle = GLES30.glGetUniformLocation(program, "view");
+        GLES30.glUniformMatrix4fv(viewHandle, 1, false, view, 0);
 
+        int projHandle = GLES30.glGetUniformLocation(program, "proj");
+        GLES30.glUniformMatrix4fv(projHandle, 1, false, proj, 0);
+    }
 
-        gl.glCullFace(GL10.GL_BACK);
-        gl.glVertexPointer(3, GL10.GL_FLOAT, 0, vertexBuffer);
-        gl.glColorPointer(3, GL10.GL_FLOAT, 0, colorBuffer);
-        gl.glNormalPointer(3, GL10.GL_FLOAT, normalBuffer);
-        gl.glTexCoordPointer(2, GL10.GL_FLOAT, 0, texCoordsBuffer);
+    public void draw(int count, int[] startOffset, int[] length) {
 
-        indexBuffer.position(startOffset);
-        indexBuffer.limit(startOffset + length);
-        ShortBuffer buffer = indexBuffer.slice();
-        gl.glDrawElements(GL10.GL_TRIANGLES, length,
-                GL10.GL_UNSIGNED_SHORT, buffer);
+        bindVerticesAndIndices();
+        bindMainPassCB();
 
-        gl.glDisableClientState(GL10.GL_VERTEX_ARRAY);
-        gl.glDisableClientState(GL10.GL_COLOR_ARRAY);
-        gl.glDisableClientState(GL10.GL_NORMAL_ARRAY);
-        gl.glDisableClientState(GL10.GL_TEXTURE_COORD_ARRAY);
-        gl.glDisable(GL10.GL_CULL_FACE);*/
+        for (int i = 0; i < count; i++) {
+            bindObjectPerCB(i);
+            //TODO : refactor to binding buffer
+            GLES30.glDrawRangeElements(GLES30.GL_TRIANGLES, startOffset[i], startOffset[i] + length[i], length[i] / 3, GLES30.GL_SHORT, indexBuffer);
+        }
+
+        //TODO : unbindVerticesAndIndices();
     }
 
 
