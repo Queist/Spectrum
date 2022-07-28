@@ -22,11 +22,13 @@ public class NoteShape extends Shape {
 
    @Override
    protected void initBufferResources() {
-      vertices = ShapeUtils.buildCylinderPositions(radius, width);
-      indices = ShapeUtils.buildCylinderIndices();
+      positions = ShapeUtils.buildCylinderPositions(radius, width);
       colors = ShapeUtils.buildCylinderColors();
       normals = ShapeUtils.buildCylinderNormals();
       texCoords = ShapeUtils.buildCylinderTexCoords();
+
+      vertices = ShapeUtils.mergeVertexAttributes(positions, colors, normals, texCoords);
+      indices = ShapeUtils.buildCylinderIndices();
    }
 
    @Override

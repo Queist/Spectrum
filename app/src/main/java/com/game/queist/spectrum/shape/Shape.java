@@ -21,12 +21,14 @@ public abstract class Shape {
     private String fragmentShader;
 
     private FloatBuffer vertexBuffer;
-    private FloatBuffer colorBuffer;
+    /*private FloatBuffer colorBuffer;
     private FloatBuffer normalBuffer;
-    private FloatBuffer texCoordsBuffer;
+    private FloatBuffer texCoordsBuffer;*/
     private ShortBuffer indexBuffer;
 
     protected float[] vertices;
+
+    protected float[] positions;
     protected float[] colors;
     protected float[] normals;
     protected float[] texCoords;
@@ -42,7 +44,7 @@ public abstract class Shape {
         vertexBuffer.put(vertices);
         vertexBuffer.position(0);
 
-        ByteBuffer cbb = ByteBuffer.allocateDirect(colors.length * 4);
+        /*ByteBuffer cbb = ByteBuffer.allocateDirect(colors.length * 4);
         vbb.order(ByteOrder.nativeOrder());
         colorBuffer = vbb.asFloatBuffer();
         colorBuffer.put(colors);
@@ -64,7 +66,7 @@ public abstract class Shape {
         ibb.order(ByteOrder.nativeOrder());
         indexBuffer = ibb.asShortBuffer();
         indexBuffer.put(indices);
-        indexBuffer.position(0);
+        indexBuffer.position(0);*/
 
         int vertexShaderIndex = Utility.loadShader(GLES30.GL_VERTEX_SHADER,
                 vertexShader);
