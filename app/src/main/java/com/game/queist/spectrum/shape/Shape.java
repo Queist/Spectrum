@@ -2,7 +2,6 @@ package com.game.queist.spectrum.shape;
 
 import android.opengl.GLES30;
 
-import com.game.queist.spectrum.R;
 import com.game.queist.spectrum.utils.Utility;
 
 import java.nio.ByteBuffer;
@@ -13,20 +12,17 @@ import java.nio.ShortBuffer;
 import javax.microedition.khronos.opengles.GL10;
 
 public abstract class Shape {
-    private static final int COORDS_PER_VERTEX = 11;
 
     private final int program;
 
     private String vertexShader;
     private String fragmentShader;
 
-    private FloatBuffer vertexBuffer;
-    /*private FloatBuffer colorBuffer;
+    private FloatBuffer positionBuffer;
+    private FloatBuffer colorBuffer;
     private FloatBuffer normalBuffer;
-    private FloatBuffer texCoordsBuffer;*/
+    private FloatBuffer texCoordsBuffer;
     private ShortBuffer indexBuffer;
-
-    protected float[] vertices;
 
     protected float[] positions;
     protected float[] colors;
@@ -38,13 +34,13 @@ public abstract class Shape {
         initBufferResources();
         initShader();
 
-        ByteBuffer vbb = ByteBuffer.allocateDirect(vertices.length * 4);
+        ByteBuffer vbb = ByteBuffer.allocateDirect(positions.length * 4);
         vbb.order(ByteOrder.nativeOrder());
-        vertexBuffer = vbb.asFloatBuffer();
-        vertexBuffer.put(vertices);
-        vertexBuffer.position(0);
+        positionBuffer = vbb.asFloatBuffer();
+        positionBuffer.put(positions);
+        positionBuffer.position(0);
 
-        /*ByteBuffer cbb = ByteBuffer.allocateDirect(colors.length * 4);
+        ByteBuffer cbb = ByteBuffer.allocateDirect(colors.length * 4);
         vbb.order(ByteOrder.nativeOrder());
         colorBuffer = vbb.asFloatBuffer();
         colorBuffer.put(colors);
@@ -66,7 +62,7 @@ public abstract class Shape {
         ibb.order(ByteOrder.nativeOrder());
         indexBuffer = ibb.asShortBuffer();
         indexBuffer.put(indices);
-        indexBuffer.position(0);*/
+        indexBuffer.position(0);
 
         int vertexShaderIndex = Utility.loadShader(GLES30.GL_VERTEX_SHADER,
                 vertexShader);
@@ -102,7 +98,19 @@ public abstract class Shape {
 
         int positionHandle = GLES30.glGetAttribLocation(program, "position");
         GLES30.glEnableVertexAttribArray(positionHandle);
-        GLES30.glVertexAttribPointer(positionHandle, COORDS_PER_VERTEX, GLES30.GL_FLOAT, false, COORDS_PER_VERTEX * 4, vertexBuffer);
+        GLES30.glVertexAttribPointer(positionHandle, 3, GLES30.GL_FLOAT, false, 3 * 4, positionBuffer);
+
+        int colorHandle = GLES30.glGetAttribLocation(program, "color");
+        GLES30.glEnableVertexAttribArray(colorHandle);
+        GLES30.glVertexAttribPointer(colorHandle, 3, GLES30.GL_FLOAT, false, 3 * 4, colorBuffer);
+
+        int normalHandle = GLES30.glGetAttribLocation(program, "normal");
+        GLES30.glEnableVertexAttribArray(normalHandle);
+        GLES30.glVertexAttribPointer(normalHandle, 3, GLES30.GL_FLOAT, false, 3 * 4, normalBuffer);
+
+        int texCoordsHandle = GLES30.glGetAttribLocation(program, "texCoords");
+        GLES30.glEnableVertexAttribArray(texCoordsHandle);
+        GLES30.glVertexAttribPointer(texCoordsHandle, 2, GLES30.GL_FLOAT, false, 2 * 4, texCoordsBuffer);
 
         /**
          * TODO : bind constant buffer

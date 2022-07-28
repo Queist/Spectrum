@@ -92,7 +92,7 @@ public class ShapeUtils {
       return new float[0];
    }
 
-   public static float[] mergeVertexAttributes(float[] positions, float[] colors, float[] normals, float[] texCoords) {
+   /*public static float[] mergeVertexAttributes(float[] positions, float[] colors, float[] normals, float[] texCoords) {
       float[] vertices = new float[positions.length + colors.length + normals.length + texCoords.length];
       assert vertices.length / 11 == 0;
       for (int i = 0; i < vertices.length/11; i++) {
@@ -110,5 +110,5 @@ public class ShapeUtils {
 
       }
       return new float[0];
-   }
+   }*/
 }

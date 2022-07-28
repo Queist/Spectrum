@@ -27,7 +27,6 @@ public class NoteShape extends Shape {
       normals = ShapeUtils.buildCylinderNormals();
       texCoords = ShapeUtils.buildCylinderTexCoords();
 
-      vertices = ShapeUtils.mergeVertexAttributes(positions, colors, normals, texCoords);
       indices = ShapeUtils.buildCylinderIndices();
    }
 
