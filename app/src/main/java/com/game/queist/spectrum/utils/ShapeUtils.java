@@ -93,7 +93,22 @@ public class ShapeUtils {
    }
 
    public static float[] mergeVertexAttributes(float[] positions, float[] colors, float[] normals, float[] texCoords) {
-      /*TODO*/
+      float[] vertices = new float[positions.length + colors.length + normals.length + texCoords.length];
+      assert vertices.length / 11 == 0;
+      for (int i = 0; i < vertices.length/11; i++) {
+         vertices[11 * i     ] = positions[3 * i    ];
+         vertices[11 * i + 1 ] = positions[3 * i + 1];
+         vertices[11 * i + 2 ] = positions[3 * i + 2];
+         vertices[11 * i + 3 ] = colors   [3 * i    ];
+         vertices[11 * i + 4 ] = colors   [3 * i + 1];
+         vertices[11 * i + 5 ] = colors   [3 * i + 2];
+         vertices[11 * i + 6 ] = normals  [3 * i    ];
+         vertices[11 * i + 7 ] = normals  [3 * i + 1];
+         vertices[11 * i + 8 ] = normals  [3 * i + 2];
+         vertices[11 * i + 9 ] = texCoords[2 * i    ];
+         vertices[11 * i + 10] = texCoords[2 * i + 1];
+
+      }
       return new float[0];
    }
 }

@@ -1,6 +1,8 @@
 package com.game.queist.spectrum.shape;
 
+import com.game.queist.spectrum.activities.PlayScreen;
 import com.game.queist.spectrum.utils.ShapeUtils;
+import com.game.queist.spectrum.utils.Utility;
 
 public class LaneShape extends Shape {
    private float radius;
@@ -20,9 +22,14 @@ public class LaneShape extends Shape {
 
    @Override
    protected void initBufferResources() {
+      int[] sideColors = new int[PlayScreen.SIDE_NUM];
+      for (int i = 0; i < PlayScreen.SIDE_NUM; i++) {
+         sideColors[i] = Utility.getRGB(i);
+      }
+
       vertices = ShapeUtils.buildCylinderPositions(radius, width);
       indices = ShapeUtils.buildCylinderIndices();
-      colors = ShapeUtils.buildCylinderColors();
+      colors = ShapeUtils.buildCylinderColors(sideColors);
       normals = ShapeUtils.buildCylinderNormals();
       texCoords = ShapeUtils.buildCylinderTexCoords();
    }
