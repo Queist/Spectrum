@@ -2,6 +2,7 @@ package com.game.queist.spectrum.shape;
 
 import android.content.Context;
 import android.opengl.GLES30;
+import android.opengl.Matrix;
 
 import com.game.queist.spectrum.utils.ShapeUtils;
 
@@ -41,7 +42,24 @@ public class NoteShape extends Shape {
 
    }
 
-   public void draw(@IntRange(from=0, to=3) int[] quadrant, double[] start, double[] end, double[] z) {
+   public void draw(int count, @IntRange(from=0, to=3) int[] quadrant, double[] start, double[] end, double[] z) {
+      int[] startOffset = new int[count];
+      int[] length = new int[count];
+
+      for (int i = 0; i < count; i++) {
+         startOffset[i] = (int)(((indices.length - 6) / 24) * quadrant[i] + ((indices.length - 6) / 240) * (10 - end[i])) * 6;
+         length[i] = (int)(((indices.length - 6) / 240) * (end[i] - start[i])) * 6 + 6;
+      }
+
+      float[][] worlds = new float[count][16];
+
+      for (int i = 0; i < count; i++) {
+         Matrix.translateM(worlds[i], 0, 0, 0, (float) z[i]);
+      }
+
+      setWorlds(worlds);
+
+      draw(count, startOffset, length);
       /*if (quadrant%2 == 0) {
          draw(
                  (int)(((indices.length - 6) / 24) * quadrant + ((indices.length - 6) / 240) * (10 - end)) * 6,
