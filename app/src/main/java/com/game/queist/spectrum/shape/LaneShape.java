@@ -1,21 +1,33 @@
 package com.game.queist.spectrum.shape;
 
+import android.content.Context;
+import android.opengl.GLES30;
+
 import com.game.queist.spectrum.activities.PlayScreen;
 import com.game.queist.spectrum.utils.ShapeUtils;
 import com.game.queist.spectrum.utils.Utility;
 
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
+import java.nio.FloatBuffer;
+
 public class LaneShape extends Shape {
+
+   private FloatBuffer colorBuffer;
+
+   protected float[] colors;
+
    private float radius;
    private float width;
 
-   public LaneShape(float radius, float width) {
-      super();
+   public LaneShape(Context context, float radius, float width) {
+      super(context);
       this.radius = radius;
       this.width = width;
    }
 
-   public LaneShape() {
-      super();
+   public LaneShape(Context context) {
+      super(context);
       this.radius = 10.f;
       this.width = 100.f;
    }
@@ -37,6 +49,25 @@ public class LaneShape extends Shape {
 
    @Override
    protected void initShader() {
+      setVertexShader("lane_v");
+      setFragmentShader("lane_f");
+   }
 
+   @Override
+   protected void generateBuffer() {
+      ByteBuffer cbb = ByteBuffer.allocateDirect(colors.length * 4);
+      cbb.order(ByteOrder.nativeOrder());
+      colorBuffer = cbb.asFloatBuffer();
+      colorBuffer.put(colors);
+      colorBuffer.position(0);
+      super.generateBuffer();
+   }
+
+   @Override
+   protected void bindVerticesAndIndices() {
+      super.bindVerticesAndIndices();
+      int colorHandle = GLES30.glGetAttribLocation(program, "color");
+      GLES30.glEnableVertexAttribArray(colorHandle);
+      GLES30.glVertexAttribPointer(colorHandle, 3, GLES30.GL_FLOAT, false, 3 * Float.BYTES, colorBuffer);
    }
 }

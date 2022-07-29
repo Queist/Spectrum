@@ -10,15 +10,21 @@ import android.util.Log;
 import android.widget.Button;
 import android.widget.TextView;
 
+import com.game.queist.spectrum.R;
 import com.game.queist.spectrum.chart.EffectFlag;
 import com.game.queist.spectrum.activities.PlayScreen;
 import com.game.queist.spectrum.chart.Note;
 
+import java.io.BufferedReader;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.IntBuffer;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Locale;
+import java.util.stream.Collectors;
 
 public class Utility {
     public static double screenRate = 0;
@@ -226,7 +232,7 @@ public class Utility {
         }
     }
 
-    public static int loadShader(int type, String shaderCode) {
+    public static int loadShader(Context context, int type, String name) {
         // 빈 쉐이더를 생성하고 그 인덱스를 할당.
         int shader = GLES30.glCreateShader(type);
 
@@ -242,8 +248,12 @@ public class Utility {
         else
             shaderType = "Unknown";
 
+        int shaderCode = context.getResources().getIdentifier(name, "raw", context.getPackageName());
+        InputStream inputStream = context.getResources().openRawResource(shaderCode);
+        BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(inputStream, StandardCharsets.UTF_8));
+
         // 빈 쉐이더에 소스코드를 할당.
-        GLES30.glShaderSource(shader, shaderCode);
+        GLES30.glShaderSource(shader, bufferedReader.lines().collect(Collectors.joining(System.lineSeparator())));
         // 쉐이더에 저장 된 소스코드를 컴파일
         GLES30.glCompileShader(shader);
 

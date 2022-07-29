@@ -1,5 +1,6 @@
 package com.game.queist.spectrum.shape;
 
+import android.content.Context;
 import android.opengl.GLES30;
 import android.opengl.Matrix;
 
@@ -14,20 +15,19 @@ import javax.microedition.khronos.opengles.GL;
 import javax.microedition.khronos.opengles.GL10;
 
 public abstract class Shape {
+    private Context context;
 
-    private int program;
+    protected int program;
 
-    private String vertexShader;
-    private String fragmentShader;
+    private int vertexShader;
+    private int fragmentShader;
 
     private FloatBuffer positionBuffer;
-    private FloatBuffer colorBuffer;
     private FloatBuffer normalBuffer;
     private FloatBuffer texCoordsBuffer;
     private ShortBuffer indexBuffer;
 
     protected float[] positions;
-    protected float[] colors;
     protected float[] normals;
     protected float[] texCoords;
     protected short[] indices;
@@ -37,21 +37,28 @@ public abstract class Shape {
     private static float[] view;
     private static float[] proj;
 
-    public Shape() {
+    public Shape(Context context) {
         initBufferResources();
         initShader();
+        generateBuffer();
+    }
 
+    /**
+     * initialize buffer-array
+     */
+    protected abstract void initBufferResources();
+
+    /**
+     * initialize shader
+     */
+    protected abstract void initShader();
+
+    protected void generateBuffer() {
         ByteBuffer vbb = ByteBuffer.allocateDirect(positions.length * 4);
         vbb.order(ByteOrder.nativeOrder());
         positionBuffer = vbb.asFloatBuffer();
         positionBuffer.put(positions);
         positionBuffer.position(0);
-
-        ByteBuffer cbb = ByteBuffer.allocateDirect(colors.length * 4);
-        cbb.order(ByteOrder.nativeOrder());
-        colorBuffer = cbb.asFloatBuffer();
-        colorBuffer.put(colors);
-        colorBuffer.position(0);
 
         ByteBuffer nbb = ByteBuffer.allocateDirect(normals.length * 4);
         nbb.order(ByteOrder.nativeOrder());
@@ -71,31 +78,15 @@ public abstract class Shape {
         indexBuffer.put(indices);
         indexBuffer.position(0);
 
-
-        int vertexShaderIndex = Utility.loadShader(GLES30.GL_VERTEX_SHADER,
-                vertexShader);
-        int fragmentShaderIndex = Utility.loadShader(GLES30.GL_FRAGMENT_SHADER,
-                fragmentShader);
-
         program = GLES30.glCreateProgram();
-        GLES30.glAttachShader(program, vertexShaderIndex);
-        GLES30.glAttachShader(program, fragmentShaderIndex);
+        GLES30.glAttachShader(program, vertexShader);
+        GLES30.glAttachShader(program, fragmentShader);
         GLES30.glLinkProgram(program);
 
         GLES30.glUseProgram(program);
         GLES30.glFrontFace(GLES30.GL_CCW);
         GLES30.glEnable(GL10.GL_CULL_FACE);
     }
-
-    /**
-     * initialize buffer-array
-     */
-    protected abstract void initBufferResources();
-
-    /**
-     * initialize shader
-     */
-    protected abstract void initShader();
 
     public static void setCamara(float[] camPosition, float[] target) {
         Matrix.setLookAtM(view, 0,
@@ -112,14 +103,10 @@ public abstract class Shape {
         this.worlds = worlds;
     }
 
-    private void bindVerticesAndIndices() {
+    protected void bindVerticesAndIndices() {
         int positionHandle = GLES30.glGetAttribLocation(program, "position");
         GLES30.glEnableVertexAttribArray(positionHandle);
         GLES30.glVertexAttribPointer(positionHandle, 3, GLES30.GL_FLOAT, false, 3 * Float.BYTES, positionBuffer);
-
-        int colorHandle = GLES30.glGetAttribLocation(program, "color");
-        GLES30.glEnableVertexAttribArray(colorHandle);
-        GLES30.glVertexAttribPointer(colorHandle, 3, GLES30.GL_FLOAT, false, 3 * Float.BYTES, colorBuffer);
 
         int normalHandle = GLES30.glGetAttribLocation(program, "normal");
         GLES30.glEnableVertexAttribArray(normalHandle);
@@ -143,7 +130,7 @@ public abstract class Shape {
         GLES30.glUniformMatrix4fv(projHandle, 1, false, proj, 0);
     }
 
-    public void draw(int count, int[] startOffset, int[] length) {
+    protected void draw(int count, int[] startOffset, int[] length) {
 
         bindVerticesAndIndices();
         bindMainPassCB();
@@ -158,11 +145,11 @@ public abstract class Shape {
     }
 
 
-    protected void setVertexShader(String vertexShader) {
-        this.vertexShader = vertexShader;
+    protected void setVertexShader(String shaderName) {
+        this.vertexShader = Utility.loadShader(context, GLES30.GL_VERTEX_SHADER, shaderName);
     }
 
-    protected void setFragmentShader(String fragmentShader) {
-        this.fragmentShader = fragmentShader;
+    protected void setFragmentShader(String shaderName) {
+        this.fragmentShader = Utility.loadShader(context, GLES30.GL_FRAGMENT_SHADER, shaderName);
     }
 }
