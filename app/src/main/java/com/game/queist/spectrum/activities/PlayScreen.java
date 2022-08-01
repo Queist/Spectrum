@@ -11,6 +11,8 @@ import android.graphics.Path;
 import android.graphics.Point;
 import android.graphics.Typeface;
 import android.media.MediaPlayer;
+import android.opengl.GLES20;
+import android.opengl.GLES30;
 import android.opengl.GLSurfaceView;
 import android.os.Build;
 import android.os.Bundle;
@@ -36,6 +38,9 @@ import com.game.queist.spectrum.R;
 import com.game.queist.spectrum.chart.Chart;
 import com.game.queist.spectrum.chart.EffectFlag;
 import com.game.queist.spectrum.chart.Note;
+import com.game.queist.spectrum.shape.LaneShape;
+import com.game.queist.spectrum.shape.NoteShape;
+import com.game.queist.spectrum.shape.Shape;
 import com.game.queist.spectrum.utils.DataManager;
 import com.game.queist.spectrum.utils.GamePhase;
 import com.game.queist.spectrum.utils.Utility;
@@ -124,6 +129,9 @@ public class PlayScreen extends AppCompatActivity implements GLSurfaceView.Rende
 
     GamePhase gamePhase;
     GamePhase prevGamePhase;
+
+    NoteShape noteShape;
+    LaneShape laneShape;
 
 
     @Override
@@ -584,8 +592,17 @@ public class PlayScreen extends AppCompatActivity implements GLSurfaceView.Rende
 
         Utility.setScreenRate((double)height/(double)width);
 
-        surfaceView.setEGLContextClientVersion(2);
+        surfaceView.setEGLContextClientVersion(3);
+        int redSize     =  8;
+        int greenSize   =  8;
+        int blueSize    =  8;
+        int alphaSize   =  8;
+        int depthSize   = 16;
+        int stencilSize =  8;
+        surfaceView.setEGLConfigChooser( redSize,greenSize, blueSize,alphaSize, depthSize, stencilSize );
         surfaceView.setRenderer(this);
+        surfaceView.setRenderMode(GLSurfaceView.RENDERMODE_CONTINUOUSLY);
+        surfaceView.setDebugFlags(GLSurfaceView.DEBUG_CHECK_GL_ERROR | GLSurfaceView.DEBUG_LOG_GL_CALLS);
 
         queryNotes = chart.getNotes();
         queryLines = chart.getEquivalenceLines();
@@ -1231,17 +1248,24 @@ public class PlayScreen extends AppCompatActivity implements GLSurfaceView.Rende
 
     @Override
     public void onSurfaceCreated(GL10 gl10, EGLConfig eglConfig) {
-
+        GLES30.glClearColor(1.0f, 0.0f, 0.0f, 1.0f);
+        noteShape = new NoteShape(this);
+        noteShape.initialize();
+        Shape.setCamara(new float[]{0.f, 0.f, -11.f}, new float[]{0.f, 0.f, 0.f});
+        Shape.setProj(90.f, ((float) width)/height, 1.f, 1000.f);
     }
 
     @Override
-    public void onSurfaceChanged(GL10 gl10, int i, int i1) {
-
+    public void onSurfaceChanged(GL10 gl10, int width, int height) {
+        this.width = width;
+        this.height = height;
+        GLES30.glViewport(0, 0, width, height);
     }
 
     @Override
     public void onDrawFrame(GL10 gl10) {
-
+        GLES30.glClear(GLES30.GL_COLOR_BUFFER_BIT);
+        noteShape.draw(3, new int[]{0, 0, 1}, new double[]{0.0, 0.0, 4.0}, new double[]{10.0, 10.0, 10.0}, new double[]{0.0, 3.0, 5.0});
     }
 }
 
