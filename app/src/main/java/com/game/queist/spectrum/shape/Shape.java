@@ -34,10 +34,17 @@ public abstract class Shape {
 
     protected float[][] worlds;
 
-    private static float[] view;
-    private static float[] proj;
+    private static float[] view = new float[16];
+    private static float[] proj = new float[16];
 
     public Shape(Context context) {
+        this.context = context;
+    }
+
+    /**
+     * must be called after constructor
+     */
+    public void initialize() {
         initBufferResources();
         initShader();
         generateBuffer();
@@ -85,7 +92,6 @@ public abstract class Shape {
 
         GLES30.glUseProgram(program);
         GLES30.glFrontFace(GLES30.GL_CCW);
-        GLES30.glEnable(GL10.GL_CULL_FACE);
     }
 
     public static void setCamara(float[] camPosition, float[] target) {
@@ -104,17 +110,44 @@ public abstract class Shape {
     }
 
     protected void bindVerticesAndIndices() {
+        int[] vertexBufferIndex = new int[3];
+        GLES30.glGenBuffers(3, vertexBufferIndex, 0);
+        GLES30.glBindBuffer(GLES30.GL_ARRAY_BUFFER, vertexBufferIndex[0]);
+        GLES30.glBufferData(GLES30.GL_ARRAY_BUFFER, positions.length * Float.BYTES, positionBuffer, GLES30.GL_STATIC_DRAW);
+
+        GLES30.glBindBuffer(GLES30.GL_ARRAY_BUFFER, vertexBufferIndex[1]);
+        GLES30.glBufferData(GLES30.GL_ARRAY_BUFFER, normals.length * Float.BYTES, normalBuffer, GLES30.GL_STATIC_DRAW);
+
+        GLES30.glBindBuffer(GLES30.GL_ARRAY_BUFFER, vertexBufferIndex[2]);
+        GLES30.glBufferData(GLES30.GL_ARRAY_BUFFER, texCoords.length * Float.BYTES, texCoordsBuffer, GLES30.GL_STATIC_DRAW);
+
+        int[] vertexArrayIndex = new int[1];
+        GLES30.glGenVertexArrays(1, vertexArrayIndex, 0);
+        GLES30.glBindVertexArray(vertexArrayIndex[0]);
+
         int positionHandle = GLES30.glGetAttribLocation(program, "position");
+        GLES30.glBindBuffer(GLES30.GL_ARRAY_BUFFER, vertexBufferIndex[0]);
         GLES30.glEnableVertexAttribArray(positionHandle);
-        GLES30.glVertexAttribPointer(positionHandle, 3, GLES30.GL_FLOAT, false, 3 * Float.BYTES, positionBuffer);
+        GLES30.glVertexAttribPointer(positionHandle, 3, GLES30.GL_FLOAT, false, 3 * Float.BYTES, 0);
 
         int normalHandle = GLES30.glGetAttribLocation(program, "normal");
+        GLES30.glBindBuffer(GLES30.GL_ARRAY_BUFFER, vertexBufferIndex[1]);
         GLES30.glEnableVertexAttribArray(normalHandle);
-        GLES30.glVertexAttribPointer(normalHandle, 3, GLES30.GL_FLOAT, false, 3 * Float.BYTES, normalBuffer);
+        GLES30.glVertexAttribPointer(normalHandle, 3, GLES30.GL_FLOAT, false, 3 * Float.BYTES, 0);
 
         int texCoordsHandle = GLES30.glGetAttribLocation(program, "texCoords");
+        GLES30.glBindBuffer(GLES30.GL_ARRAY_BUFFER, vertexBufferIndex[2]);
         GLES30.glEnableVertexAttribArray(texCoordsHandle);
-        GLES30.glVertexAttribPointer(texCoordsHandle, 2, GLES30.GL_FLOAT, false, 2 * Float.BYTES, texCoordsBuffer);
+        GLES30.glVertexAttribPointer(texCoordsHandle, 2, GLES30.GL_FLOAT, false, 2 * Float.BYTES, 0);
+
+        int[] bufferIndex = new int[1];
+        GLES30.glGenBuffers(1, bufferIndex, 0);
+        GLES30.glBindBuffer(GLES30.GL_ELEMENT_ARRAY_BUFFER, bufferIndex[0]);
+        GLES30.glBufferData(GLES30.GL_ELEMENT_ARRAY_BUFFER, indexBuffer.limit() * Short.BYTES, indexBuffer, GLES30.GL_STATIC_DRAW);
+    }
+
+    private void unBindVerticesAndIndices() {
+        GLES30.glBindVertexArray(0);
     }
 
     protected void bindObjectPerCB(int i) {
@@ -137,11 +170,11 @@ public abstract class Shape {
 
         for (int i = 0; i < count; i++) {
             bindObjectPerCB(i);
-            //TODO : refactor to binding buffer
-            GLES30.glDrawRangeElements(GLES30.GL_TRIANGLES, startOffset[i], startOffset[i] + length[i], length[i] / 3, GLES30.GL_SHORT, indexBuffer);
+            //GLES30.glDrawRangeElements(GLES30.GL_TRIANGLES, 0, 360, 360, GLES30.GL_UNSIGNED_SHORT, 0);
+            GLES30.glDrawElements(GLES30.GL_TRIANGLES, length[i], GLES30.GL_UNSIGNED_SHORT, startOffset[i] * Short.BYTES);
         }
 
-        //TODO : unbindVerticesAndIndices();
+        unBindVerticesAndIndices();
     }
 
 

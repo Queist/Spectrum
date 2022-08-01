@@ -65,9 +65,16 @@ public class LaneShape extends Shape {
 
    @Override
    protected void bindVerticesAndIndices() {
+      int[] vertexBufferIndex = new int[1];
+      GLES30.glGenBuffers(1, vertexBufferIndex, 0);
+      GLES30.glBindBuffer(GLES30.GL_ARRAY_BUFFER, vertexBufferIndex[0]);
+      GLES30.glBufferData(GLES30.GL_ARRAY_BUFFER, colors.length * Float.BYTES, colorBuffer, GLES30.GL_STATIC_DRAW);
+
       super.bindVerticesAndIndices();
+
       int colorHandle = GLES30.glGetAttribLocation(program, "color");
+      GLES30.glBindBuffer(GLES30.GL_ARRAY_BUFFER, vertexBufferIndex[0]);
       GLES30.glEnableVertexAttribArray(colorHandle);
-      GLES30.glVertexAttribPointer(colorHandle, 3, GLES30.GL_FLOAT, false, 3 * Float.BYTES, colorBuffer);
+      GLES30.glVertexAttribPointer(colorHandle, 3, GLES30.GL_FLOAT, false, 3 * Float.BYTES, 0);
    }
 }

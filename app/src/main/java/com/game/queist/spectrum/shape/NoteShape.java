@@ -47,17 +47,29 @@ public class NoteShape extends Shape {
       int[] length = new int[count];
 
       for (int i = 0; i < count; i++) {
-         startOffset[i] = (int)(((indices.length - 6) / 24) * quadrant[i] + ((indices.length - 6) / 240) * (10 - end[i])) * 6;
-         length[i] = (int)(((indices.length - 6) / 240) * (end[i] - start[i])) * 6 + 6;
+         if (quadrant[i]%2 == 0) {
+            startOffset[i] = (int)((indices.length / 24) * quadrant[i] + (indices.length / 240) * (10 - end[i])) * 6;
+            length[i] = (int)((indices.length / 240) * (end[i] - start[i])) * 6;
+         }
+         else {
+            startOffset[i] = (int)((indices.length / 24) * quadrant[i] + (indices.length / 240) * start[i]) * 6;
+            length[i] = (int)((indices.length / 240) * (end[i] - start[i])) * 6;
+         }
+         System.out.println(startOffset[i]);
+         System.out.println(length[i]);
       }
 
       float[][] worlds = new float[count][16];
+      float[][] colors = new float[count][3];
 
       for (int i = 0; i < count; i++) {
+         Matrix.setIdentityM(worlds[i], 0);
          Matrix.translateM(worlds[i], 0, 0, 0, (float) z[i]);
+         colors[i][0] = colors[i][1] = colors[i][2] = 1.f; //temporal
       }
 
       setWorlds(worlds);
+      setColors(colors);
 
       draw(count, startOffset, length);
       /*if (quadrant%2 == 0) {
