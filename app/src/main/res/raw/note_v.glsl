@@ -8,13 +8,13 @@ uniform mat4 world;
 uniform mat4 view;
 uniform mat4 proj;
 
-layout (location = 0) out vec3 gl_Normal;
-layout (location = 1) out vec2 gl_TexCoords;
-layout (location = 2) out vec4 gl_VPosition;
+layout (location = 0) out vec3 f_Normal;
+layout (location = 1) out vec2 f_TexCoords;
+layout (location = 2) out vec4 f_VPosition;
 
 void main() {
     gl_Position = proj * view * world * vec4(position, 1.0);
-    gl_Normal = normal;
-    gl_TexCoords = texCoords;
-    gl_VPosition = vec4(position, 1.0);
+    f_Normal = normal;
+    f_TexCoords = texCoords;
+    f_VPosition = vec4(position, 1.0);
 }
