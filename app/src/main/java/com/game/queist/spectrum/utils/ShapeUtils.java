@@ -3,7 +3,8 @@ package com.game.queist.spectrum.utils;
 import android.graphics.Color;
 
 public class ShapeUtils {
-   public static int LEVEL_OF_DETAIL = 40;
+   public static int LEVEL_OF_DETAIL = 120;
+
    public static float[] buildCylinderPositions(float radius, float width) {
       float[] vertices = new float[(LEVEL_OF_DETAIL + 1) * 2 * 3];
       for (int i = 0; i < LEVEL_OF_DETAIL + 1; i++) {
@@ -18,8 +19,8 @@ public class ShapeUtils {
    }
 
    public static short[] buildCylinderIndices() {
-      short[] indices = new short[(LEVEL_OF_DETAIL + 1) * 2 * 3];
-      for (int i = 0; i < LEVEL_OF_DETAIL + 1; i++) {
+      short[] indices = new short[LEVEL_OF_DETAIL * 2 * 3];
+      for (int i = 0; i < LEVEL_OF_DETAIL; i++) {
          indices[6 * i    ] = (short) (2 * i    );
          indices[6 * i + 1] = (short) (2 * i + 1);
          indices[6 * i + 2] = (short) (2 * i + 2);
