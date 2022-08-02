@@ -1248,11 +1248,15 @@ public class PlayScreen extends AppCompatActivity implements GLSurfaceView.Rende
 
     @Override
     public void onSurfaceCreated(GL10 gl10, EGLConfig eglConfig) {
-        GLES30.glClearColor(1.0f, 0.0f, 0.0f, 1.0f);
+        GLES30.glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+
         noteShape = new NoteShape(this);
+        laneShape = new LaneShape(this);
         noteShape.initialize();
+        laneShape.initialize();
+
         Shape.setCamara(new float[]{0.f, 0.f, -11.f}, new float[]{0.f, 0.f, 0.f});
-        Shape.setProj(90.f, ((float) width)/height, 1.f, 1000.f);
+        Shape.setProj(90.f, ((float) width)/height, 10.5f, 1000.f);
     }
 
     @Override
@@ -1265,6 +1269,7 @@ public class PlayScreen extends AppCompatActivity implements GLSurfaceView.Rende
     @Override
     public void onDrawFrame(GL10 gl10) {
         GLES30.glClear(GLES30.GL_COLOR_BUFFER_BIT);
+        laneShape.draw();
         noteShape.draw(3, new int[]{0, 0, 1}, new double[]{0.0, 0.0, 4.0}, new double[]{10.0, 10.0, 10.0}, new double[]{0.0, 3.0, 5.0});
     }
 }
