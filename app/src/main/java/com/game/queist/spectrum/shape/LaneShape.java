@@ -42,7 +42,7 @@ public class LaneShape extends Shape {
    protected void initBufferResources() {
       int[] sideColors = new int[PlayScreen.SIDE_NUM];
       for (int i = 0; i < PlayScreen.SIDE_NUM; i++) {
-         sideColors[i] = Utility.getRGB(i);
+         sideColors[i] = Utility.getBGRGB(i);
       }
 
       positions = ShapeUtils.buildCylinderPositions(radius, width);

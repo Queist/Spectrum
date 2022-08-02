@@ -11,7 +11,6 @@ import android.graphics.Path;
 import android.graphics.Point;
 import android.graphics.Typeface;
 import android.media.MediaPlayer;
-import android.opengl.GLES20;
 import android.opengl.GLES30;
 import android.opengl.GLSurfaceView;
 import android.os.Build;
@@ -1076,7 +1075,7 @@ public class PlayScreen extends AppCompatActivity implements GLSurfaceView.Rende
             for (Note note : screenNotes[i]) {
                 if (note.getKind().equals(Note.AUTO)) {
                     double[] info = getInfoForDraw(note.getBit(), currentBit, 0, 10, i);
-                    int color = Utility.getRGB(note.getColor());
+                    int color = Utility.getNoteRGB(note.getColor());
                     info[4] *= Math.sqrt((double)337/256)/2;
                     Paint paint = new Paint();
                     paint.setColor(color);
@@ -1102,7 +1101,7 @@ public class PlayScreen extends AppCompatActivity implements GLSurfaceView.Rende
                 }
                 else {
                     double[] info = getInfoForDraw(note.getBit(), currentBit, note.getPosition1(), note.getPosition2(), i);
-                    int color = Utility.getRGB(note.getColor());
+                    int color = Utility.getNoteRGB(note.getColor());
                     Paint paint = new Paint();
                     paint.setColor(Color.WHITE);
                     paint.setStrokeWidth((float) info[4]);

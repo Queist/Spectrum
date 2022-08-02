@@ -1117,7 +1117,7 @@ public class PlayScreenLegacy extends AppCompatActivity implements SurfaceHolder
             for (Note note : screenNotes[i]) {
                 if (note.getKind().equals(Note.AUTO)) {
                     double[] info = getInfoForDraw(note.getBit(), currentBit, 0, 10, i);
-                    int color = Utility.getRGB(note.getColor());
+                    int color = Utility.getNoteRGB(note.getColor());
                     info[4] *= Math.sqrt((double)337/256)/2;
                     Paint paint = new Paint();
                     paint.setColor(color);
@@ -1143,7 +1143,7 @@ public class PlayScreenLegacy extends AppCompatActivity implements SurfaceHolder
                 }
                 else {
                     double[] info = getInfoForDraw(note.getBit(), currentBit, note.getPosition1(), note.getPosition2(), i);
-                    int color = Utility.getRGB(note.getColor());
+                    int color = Utility.getNoteRGB(note.getColor());
                     Paint paint = new Paint();
                     paint.setColor(Color.WHITE);
                     paint.setStrokeWidth((float) info[4]);

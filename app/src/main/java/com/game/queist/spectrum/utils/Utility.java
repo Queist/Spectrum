@@ -10,7 +10,6 @@ import android.util.Log;
 import android.widget.Button;
 import android.widget.TextView;
 
-import com.game.queist.spectrum.R;
 import com.game.queist.spectrum.chart.EffectFlag;
 import com.game.queist.spectrum.activities.PlayScreen;
 import com.game.queist.spectrum.chart.Note;
@@ -29,12 +28,14 @@ import java.util.stream.Collectors;
 public class Utility {
     public static double screenRate = 0;
     private static int[] color = new int[PlayScreen.SIDE_NUM];
-    private static float[] saturation = new float[PlayScreen.SIDE_NUM];
+    private static float[] saturationNote = new float[PlayScreen.SIDE_NUM];
+    private static float[] saturationBG = new float[PlayScreen.SIDE_NUM];
 
     public static void initNoteColor(Context context) {
         for (int i = 0; i < PlayScreen.SIDE_NUM; i++) {
             color[i] = DataManager.getData(context).getColor(i);
-            saturation[i] = DataManager.getData(context).getSaturationNote(i);
+            saturationNote[i] = DataManager.getData(context).getSaturationNote(i);
+            saturationBG[i] = DataManager.getData(context).getSaturationBG(i);
         }
     }
 
@@ -49,9 +50,13 @@ public class Utility {
         return coefficient;
     }
 
-    public static int getRGB(int side) {
+    public static int getNoteRGB(int side) {
         if (side == -1) return Color.WHITE;
-        return Color.HSVToColor(new float[]{color[side] * 30, saturation[side], 1.0f});
+        return Color.HSVToColor(new float[]{color[side] * 30, saturationNote[side], 1.0f});
+    }
+    public static int getBGRGB(int side) {
+        if (side == -1) return Color.WHITE;
+        return Color.HSVToColor(new float[]{color[side] * 30, saturationBG[side], 1.0f});
     }
 
     public static int[] getRGB(int color, int white) {
