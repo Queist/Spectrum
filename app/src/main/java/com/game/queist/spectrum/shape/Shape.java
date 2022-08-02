@@ -11,9 +11,6 @@ import java.nio.ByteOrder;
 import java.nio.FloatBuffer;
 import java.nio.ShortBuffer;
 
-import javax.microedition.khronos.opengles.GL;
-import javax.microedition.khronos.opengles.GL10;
-
 public abstract class Shape {
     private Context context;
 
@@ -37,6 +34,13 @@ public abstract class Shape {
     private static float[] view = new float[16];
     private static float[] proj = new float[16];
 
+    private int indexBufferIndex;
+    private int vertexBufferIndex;
+
+    private int positionAttrIndex;
+    private int normalAttrIndex;
+    private int texCoordsAttrIndex;
+
     public Shape(Context context) {
         this.context = context;
     }
@@ -48,6 +52,7 @@ public abstract class Shape {
         initBufferResources();
         initShader();
         generateBuffer();
+        generateVerticesAndIndices();
     }
 
     /**
@@ -89,9 +94,6 @@ public abstract class Shape {
         GLES30.glAttachShader(program, vertexShader);
         GLES30.glAttachShader(program, fragmentShader);
         GLES30.glLinkProgram(program);
-
-        GLES30.glUseProgram(program);
-        GLES30.glFrontFace(GLES30.GL_CCW);
     }
 
     public static void setCamara(float[] camPosition, float[] target) {
@@ -109,9 +111,13 @@ public abstract class Shape {
         this.worlds = worlds;
     }
 
-    protected void bindVerticesAndIndices() {
+    protected void generateVerticesAndIndices() {
         int[] vertexBufferIndex = new int[3];
         GLES30.glGenBuffers(3, vertexBufferIndex, 0);
+        positionAttrIndex = vertexBufferIndex[0];
+        normalAttrIndex = vertexBufferIndex[1];
+        texCoordsAttrIndex = vertexBufferIndex[2];
+
         GLES30.glBindBuffer(GLES30.GL_ARRAY_BUFFER, vertexBufferIndex[0]);
         GLES30.glBufferData(GLES30.GL_ARRAY_BUFFER, positions.length * Float.BYTES, positionBuffer, GLES30.GL_STATIC_DRAW);
 
@@ -123,31 +129,47 @@ public abstract class Shape {
 
         int[] vertexArrayIndex = new int[1];
         GLES30.glGenVertexArrays(1, vertexArrayIndex, 0);
+        this.vertexBufferIndex = vertexArrayIndex[0];
         GLES30.glBindVertexArray(vertexArrayIndex[0]);
 
+        int[] bufferIndex = new int[1];
+        GLES30.glGenBuffers(1, bufferIndex, 0);
+        indexBufferIndex = bufferIndex[0];
+        GLES30.glBindBuffer(GLES30.GL_ELEMENT_ARRAY_BUFFER, bufferIndex[0]);
+        GLES30.glBufferData(GLES30.GL_ELEMENT_ARRAY_BUFFER, indexBuffer.limit() * Short.BYTES, indexBuffer, GLES30.GL_STATIC_DRAW);
+
+        GLES30.glBindVertexArray(0);
+    }
+
+    protected void bindVerticesAndIndices() {
+        GLES30.glBindVertexArray(vertexBufferIndex);
+        GLES30.glBindBuffer(GLES30.GL_ELEMENT_ARRAY_BUFFER, indexBufferIndex);
+
         int positionHandle = GLES30.glGetAttribLocation(program, "position");
-        GLES30.glBindBuffer(GLES30.GL_ARRAY_BUFFER, vertexBufferIndex[0]);
+        GLES30.glBindBuffer(GLES30.GL_ARRAY_BUFFER, positionAttrIndex);
         GLES30.glEnableVertexAttribArray(positionHandle);
         GLES30.glVertexAttribPointer(positionHandle, 3, GLES30.GL_FLOAT, false, 3 * Float.BYTES, 0);
 
         int normalHandle = GLES30.glGetAttribLocation(program, "normal");
-        GLES30.glBindBuffer(GLES30.GL_ARRAY_BUFFER, vertexBufferIndex[1]);
+        GLES30.glBindBuffer(GLES30.GL_ARRAY_BUFFER, normalAttrIndex);
         GLES30.glEnableVertexAttribArray(normalHandle);
         GLES30.glVertexAttribPointer(normalHandle, 3, GLES30.GL_FLOAT, false, 3 * Float.BYTES, 0);
 
         int texCoordsHandle = GLES30.glGetAttribLocation(program, "texCoords");
-        GLES30.glBindBuffer(GLES30.GL_ARRAY_BUFFER, vertexBufferIndex[2]);
+        GLES30.glBindBuffer(GLES30.GL_ARRAY_BUFFER, texCoordsAttrIndex);
         GLES30.glEnableVertexAttribArray(texCoordsHandle);
         GLES30.glVertexAttribPointer(texCoordsHandle, 2, GLES30.GL_FLOAT, false, 2 * Float.BYTES, 0);
-
-        int[] bufferIndex = new int[1];
-        GLES30.glGenBuffers(1, bufferIndex, 0);
-        GLES30.glBindBuffer(GLES30.GL_ELEMENT_ARRAY_BUFFER, bufferIndex[0]);
-        GLES30.glBufferData(GLES30.GL_ELEMENT_ARRAY_BUFFER, indexBuffer.limit() * Short.BYTES, indexBuffer, GLES30.GL_STATIC_DRAW);
     }
 
-    private void unBindVerticesAndIndices() {
-        GLES30.glBindVertexArray(0);
+    protected void unBindVerticesAndIndices() {
+        int positionHandle = GLES30.glGetAttribLocation(program, "position");
+        GLES30.glDisableVertexAttribArray(positionHandle);
+
+        int normalHandle = GLES30.glGetAttribLocation(program, "normal");
+        GLES30.glDisableVertexAttribArray(normalHandle);
+
+        int texCoordsHandle = GLES30.glGetAttribLocation(program, "texCoords");
+        GLES30.glDisableVertexAttribArray(texCoordsHandle);
     }
 
     protected void bindObjectPerCB(int i) {
@@ -164,16 +186,16 @@ public abstract class Shape {
     }
 
     protected void draw(int count, int[] startOffset, int[] length) {
+        GLES30.glUseProgram(program);
+        GLES30.glFrontFace(GLES30.GL_CCW);
 
         bindVerticesAndIndices();
         bindMainPassCB();
-
         for (int i = 0; i < count; i++) {
             bindObjectPerCB(i);
             //GLES30.glDrawRangeElements(GLES30.GL_TRIANGLES, 0, 360, 360, GLES30.GL_UNSIGNED_SHORT, 0);
             GLES30.glDrawElements(GLES30.GL_TRIANGLES, length[i], GLES30.GL_UNSIGNED_SHORT, startOffset[i] * Short.BYTES);
         }
-
         unBindVerticesAndIndices();
     }
 

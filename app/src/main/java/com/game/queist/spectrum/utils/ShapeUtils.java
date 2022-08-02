@@ -46,6 +46,14 @@ public class ShapeUtils {
 
    public static float[] buildCylinderColors(int[] sideColors) {
       float[] colors = new float[(LEVEL_OF_DETAIL + 1) * 2 * 3];
+
+      float[][] sideColorsRGB = new float[sideColors.length][3];
+      for (int i = 0; i < sideColors.length; i++) {
+         sideColorsRGB[i][0] = Color.red(sideColors[i]) / 255.f;
+         sideColorsRGB[i][1] = Color.green(sideColors[i]) / 255.f;
+         sideColorsRGB[i][2] = Color.blue(sideColors[i]) / 255.f;
+      }
+
       for (int i = 0; i < LEVEL_OF_DETAIL; i++) {
          int j = i * sideColors.length / LEVEL_OF_DETAIL;
          colors[6 * i    ] = Color.red(sideColors[j]) / 255.f;

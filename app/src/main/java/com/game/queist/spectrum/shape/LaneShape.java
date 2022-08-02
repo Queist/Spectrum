@@ -2,6 +2,7 @@ package com.game.queist.spectrum.shape;
 
 import android.content.Context;
 import android.opengl.GLES30;
+import android.opengl.Matrix;
 
 import com.game.queist.spectrum.activities.PlayScreen;
 import com.game.queist.spectrum.utils.ShapeUtils;
@@ -20,6 +21,8 @@ public class LaneShape extends Shape {
    private float radius;
    private float width;
 
+   private int colorAttrIndex;
+
    public LaneShape(Context context, float radius, float width) {
       super(context);
       this.radius = radius;
@@ -28,8 +31,8 @@ public class LaneShape extends Shape {
 
    public LaneShape(Context context) {
       super(context);
-      this.radius = 10.f;
-      this.width = 100.f;
+      this.radius = 10.5f;
+      this.width = 1000.f;
    }
 
    @Override
@@ -64,17 +67,38 @@ public class LaneShape extends Shape {
    }
 
    @Override
-   protected void bindVerticesAndIndices() {
+   protected void generateVerticesAndIndices() {
       int[] vertexBufferIndex = new int[1];
       GLES30.glGenBuffers(1, vertexBufferIndex, 0);
+      colorAttrIndex = vertexBufferIndex[0];
       GLES30.glBindBuffer(GLES30.GL_ARRAY_BUFFER, vertexBufferIndex[0]);
       GLES30.glBufferData(GLES30.GL_ARRAY_BUFFER, colors.length * Float.BYTES, colorBuffer, GLES30.GL_STATIC_DRAW);
 
+      super.generateVerticesAndIndices();
+   }
+
+   @Override
+   protected void bindVerticesAndIndices() {
       super.bindVerticesAndIndices();
 
       int colorHandle = GLES30.glGetAttribLocation(program, "color");
-      GLES30.glBindBuffer(GLES30.GL_ARRAY_BUFFER, vertexBufferIndex[0]);
+      GLES30.glBindBuffer(GLES30.GL_ARRAY_BUFFER, colorAttrIndex);
       GLES30.glEnableVertexAttribArray(colorHandle);
       GLES30.glVertexAttribPointer(colorHandle, 3, GLES30.GL_FLOAT, false, 3 * Float.BYTES, 0);
+   }
+
+   @Override
+   protected void unBindVerticesAndIndices() {
+      super.unBindVerticesAndIndices();
+
+      int colorHandle = GLES30.glGetAttribLocation(program, "color");
+      GLES30.glDisableVertexAttribArray(colorHandle);
+   }
+
+   public void draw() {
+      float[][] worlds = new float[1][16];
+      Matrix.setIdentityM(worlds[0], 0);
+      setWorlds(worlds);
+      draw(1, new int[]{0}, new int[]{indices.length});
    }
 }

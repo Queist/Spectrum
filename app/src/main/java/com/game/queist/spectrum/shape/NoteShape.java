@@ -39,7 +39,6 @@ public class NoteShape extends Shape {
    protected void initShader() {
       setVertexShader("note_v");
       setFragmentShader("note_f");
-
    }
 
    public void draw(int count, @IntRange(from=0, to=3) int[] quadrant, double[] start, double[] end, double[] z) {
@@ -55,8 +54,6 @@ public class NoteShape extends Shape {
             startOffset[i] = (int)((indices.length / 24) * quadrant[i] + (indices.length / 240) * start[i]) * 6;
             length[i] = (int)((indices.length / 240) * (end[i] - start[i])) * 6;
          }
-         System.out.println(startOffset[i]);
-         System.out.println(length[i]);
       }
 
       float[][] worlds = new float[count][16];
