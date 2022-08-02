@@ -44,7 +44,7 @@ public class ShapeUtils {
       return colors;
    }
 
-   public static float[] buildCylinderColors(int[] sideColors) {
+   public static float[] buildCylinderColors(int[] sideColors, float blendRate) {
       float[] colors = new float[(LEVEL_OF_DETAIL + 1) * 2 * 3];
 
       float[][] sideColorsRGB = new float[sideColors.length][3];
@@ -55,20 +55,42 @@ public class ShapeUtils {
       }
 
       for (int i = 0; i < LEVEL_OF_DETAIL; i++) {
-         int j = i * sideColors.length / LEVEL_OF_DETAIL;
-         colors[6 * i    ] = Color.red(sideColors[j]) / 255.f;
-         colors[6 * i + 1] = Color.green(sideColors[j]) / 255.f;
-         colors[6 * i + 2] = Color.blue(sideColors[j]) / 255.f;
-         colors[6 * i + 3] = Color.red(sideColors[j]) / 255.f;
-         colors[6 * i + 4] = Color.green(sideColors[j]) / 255.f;
-         colors[6 * i + 5] = Color.blue(sideColors[j]) / 255.f;
+         float rate = ((float) i * sideColors.length) / LEVEL_OF_DETAIL;
+         int j = (int) Math.floor(rate);
+         rate -= j;
+         float blendR;
+         float blendG;
+         float blendB;
+         if (blendRate <= rate && rate <= 1 - blendRate) {
+            blendR = sideColorsRGB[j][0];
+            blendG = sideColorsRGB[j][1];
+            blendB = sideColorsRGB[j][2];
+         }
+         else if (blendRate > rate) {
+            int before = (j + sideColors.length - 1) % sideColors.length;
+            blendR = (sideColorsRGB[j][0] * (rate + blendRate) + sideColorsRGB[before][0] * (blendRate - rate)) / (2 * blendRate);
+            blendG = (sideColorsRGB[j][1] * (rate + blendRate) + sideColorsRGB[before][1] * (blendRate - rate)) / (2 * blendRate);
+            blendB = (sideColorsRGB[j][2] * (rate + blendRate) + sideColorsRGB[before][2] * (blendRate - rate)) / (2 * blendRate);
+         }
+         else {
+            int next = (j + 1)%sideColors.length;
+            blendR = (sideColorsRGB[j][0] * (1 - rate + blendRate) + sideColorsRGB[next][0] * (rate + blendRate - 1)) / (2 * blendRate);
+            blendG = (sideColorsRGB[j][1] * (1 - rate + blendRate) + sideColorsRGB[next][1] * (rate + blendRate - 1)) / (2 * blendRate);
+            blendB = (sideColorsRGB[j][2] * (1 - rate + blendRate) + sideColorsRGB[next][2] * (rate + blendRate - 1)) / (2 * blendRate);
+         }
+         colors[6 * i    ] = blendR;
+         colors[6 * i + 1] = blendG;
+         colors[6 * i + 2] = blendB;
+         colors[6 * i + 3] = blendR;
+         colors[6 * i + 4] = blendG;
+         colors[6 * i + 5] = blendB;
       }
-      colors[6 * LEVEL_OF_DETAIL    ] = Color.red(sideColors[0]) / 255.f;
-      colors[6 * LEVEL_OF_DETAIL + 1] = Color.green(sideColors[0]) / 255.f;
-      colors[6 * LEVEL_OF_DETAIL + 2] = Color.blue(sideColors[0]) / 255.f;
-      colors[6 * LEVEL_OF_DETAIL + 3] = Color.red(sideColors[0]) / 255.f;
-      colors[6 * LEVEL_OF_DETAIL + 4] = Color.green(sideColors[0]) / 255.f;
-      colors[6 * LEVEL_OF_DETAIL + 5] = Color.blue(sideColors[0]) / 255.f;
+      colors[6 * LEVEL_OF_DETAIL    ] = colors[0];
+      colors[6 * LEVEL_OF_DETAIL + 1] = colors[1];
+      colors[6 * LEVEL_OF_DETAIL + 2] = colors[2];
+      colors[6 * LEVEL_OF_DETAIL + 3] = colors[3];
+      colors[6 * LEVEL_OF_DETAIL + 4] = colors[4];
+      colors[6 * LEVEL_OF_DETAIL + 5] = colors[5];
       return colors;
    }
 

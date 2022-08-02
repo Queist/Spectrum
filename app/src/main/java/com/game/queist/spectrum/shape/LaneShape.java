@@ -20,19 +20,22 @@ public class LaneShape extends Shape {
 
    private float radius;
    private float width;
+   private float blendRate;
 
    private int colorAttrIndex;
 
-   public LaneShape(Context context, float radius, float width) {
+   public LaneShape(Context context, float radius, float width, float blendRate) {
       super(context);
       this.radius = radius;
       this.width = width;
+      this.blendRate = blendRate;
    }
 
    public LaneShape(Context context) {
       super(context);
       this.radius = 10.5f;
       this.width = 1000.f;
+      this.blendRate = .166667f;
    }
 
    @Override
@@ -43,7 +46,7 @@ public class LaneShape extends Shape {
       }
 
       positions = ShapeUtils.buildCylinderPositions(radius, width);
-      colors = ShapeUtils.buildCylinderColors(sideColors);
+      colors = ShapeUtils.buildCylinderColors(sideColors, blendRate);
       normals = ShapeUtils.buildCylinderNormals();
       texCoords = ShapeUtils.buildCylinderTexCoords();
 
