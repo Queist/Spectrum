@@ -2,6 +2,7 @@
 precision mediump float;
 
 uniform vec3 lightPosition;
+uniform vec3 lightColor;
 uniform vec3 color;
 
 layout (location = 0) in vec3 f_Normal;

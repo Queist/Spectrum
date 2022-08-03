@@ -1256,6 +1256,8 @@ public class PlayScreen extends AppCompatActivity implements GLSurfaceView.Rende
 
         Shape.setCamara(new float[]{0.f, 0.f, -11.f}, new float[]{0.f, 0.f, 0.f});
         Shape.setProj(90.f, ((float) width)/height, 10.5f, 1000.f);
+
+        Shape.setLight(new float[]{0.f, 0.f, -15.f}, new float[]{5.5f, 5.5f, 5.5f});
     }
 
     @Override

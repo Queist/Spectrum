@@ -31,8 +31,18 @@ public abstract class Shape {
 
     protected float[][] worlds;
 
+    /*Cam*/
+    private static float[] camPosition = new float[3];
     private static float[] view = new float[16];
     private static float[] proj = new float[16];
+
+    /*Light*/
+    private static float[] lightPosition = new float[3];
+    private static float[] lightColor = new float[3];
+
+
+    private float shininess;
+    private float[] fresnelR0 = new float[3];
 
     private int indexBufferIndex;
     private int vertexBufferIndex;
@@ -101,10 +111,21 @@ public abstract class Shape {
                 camPosition[0], camPosition[1], camPosition[2],
                 target[0], target[1], target[2],
                 0, 1, 0);
+        Shape.camPosition = camPosition;
     }
 
     public static void setProj(float fovy, float aspect, float near, float far) {
         Matrix.perspectiveM(proj, 0, fovy, aspect, near, far);
+    }
+
+    public static void setLight(float[] lightPosition, float[] lightColor) {
+        Shape.lightPosition = lightPosition;
+        Shape.lightColor = lightColor;
+    }
+
+    protected void setMaterial(float shininess, float[] fresnelR0) {
+        this.shininess = shininess;
+        this.fresnelR0 = fresnelR0;
     }
 
     public void setWorlds(float[][] worlds) {
@@ -178,11 +199,29 @@ public abstract class Shape {
     }
 
     private void bindMainPassCB() {
+        /*Cam*/
+        int camPositionHandle = GLES30.glGetUniformLocation(program, "camPosition");
+        GLES30.glUniform3fv(camPositionHandle, 1, camPosition, 0);
+
         int viewHandle = GLES30.glGetUniformLocation(program, "view");
         GLES30.glUniformMatrix4fv(viewHandle, 1, false, view, 0);
 
         int projHandle = GLES30.glGetUniformLocation(program, "proj");
         GLES30.glUniformMatrix4fv(projHandle, 1, false, proj, 0);
+
+        /*Light*/
+        int lightPositionHandle = GLES30.glGetUniformLocation(program, "lightPosition");
+        GLES30.glUniform3fv(lightPositionHandle, 1, lightPosition,0);
+
+        int lightColorHandle = GLES30.glGetUniformLocation(program, "lightColor");
+        GLES30.glUniform3fv(lightColorHandle, 1, lightColor,0);
+
+        /*Material*/
+        int shininessHandle = GLES30.glGetUniformLocation(program, "shininess");
+        GLES30.glUniform1f(shininessHandle, shininess);
+
+        int fresnelR0Handle = GLES30.glGetUniformLocation(program, "fresnelR0");
+        GLES30.glUniform3fv(fresnelR0Handle, 1, fresnelR0, 0);
     }
 
     protected void draw(int count, int[] startOffset, int[] length) {
