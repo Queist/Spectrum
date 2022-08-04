@@ -10,10 +10,10 @@ public class ShapeUtils {
       for (int i = 0; i < LEVEL_OF_DETAIL + 1; i++) {
          vertices[6 * i    ] = (float)Math.cos(2 * Math.PI / LEVEL_OF_DETAIL * i) * radius;
          vertices[6 * i + 1] = (float)Math.sin(2 * Math.PI / LEVEL_OF_DETAIL * i) * radius;
-         vertices[6 * i + 2] = width/2;
+         vertices[6 * i + 2] = width;
          vertices[6 * i + 3] = (float)Math.cos(2 * Math.PI / LEVEL_OF_DETAIL * i) * radius;
          vertices[6 * i + 4] = (float)Math.sin(2 * Math.PI / LEVEL_OF_DETAIL * i) * radius;
-         vertices[6 * i + 5] = -width/2;
+         vertices[6 * i + 5] = 0;
       }
       return vertices;
    }
@@ -118,28 +118,98 @@ public class ShapeUtils {
       return texCoords;
    }
 
-   public static float[] buildDiskVertex() {
+   public static float[] buildDiskPositions(float radius, float depth) {
       /*TODO*/
-      return new float[0];
+      float[] vertices = new float[(LEVEL_OF_DETAIL + 2) * 3];
+      for (int i = 0; i < LEVEL_OF_DETAIL + 1; i++) {
+         vertices[3 * i    ] = (float)Math.cos(2 * Math.PI / LEVEL_OF_DETAIL * i) * radius;
+         vertices[3 * i + 1] = (float)Math.sin(2 * Math.PI / LEVEL_OF_DETAIL * i) * radius;
+         vertices[3 * i + 2] = depth;
+      }
+      vertices[3 * LEVEL_OF_DETAIL + 3] = 0.f;
+      vertices[3 * LEVEL_OF_DETAIL + 4] = 0.f;
+      vertices[3 * LEVEL_OF_DETAIL + 5] = depth + radius;
+      return vertices;
    }
 
-   /*public static float[] mergeVertexAttributes(float[] positions, float[] colors, float[] normals, float[] texCoords) {
-      float[] vertices = new float[positions.length + colors.length + normals.length + texCoords.length];
-      assert vertices.length / 11 == 0;
-      for (int i = 0; i < vertices.length/11; i++) {
-         vertices[11 * i     ] = positions[3 * i    ];
-         vertices[11 * i + 1 ] = positions[3 * i + 1];
-         vertices[11 * i + 2 ] = positions[3 * i + 2];
-         vertices[11 * i + 3 ] = colors   [3 * i    ];
-         vertices[11 * i + 4 ] = colors   [3 * i + 1];
-         vertices[11 * i + 5 ] = colors   [3 * i + 2];
-         vertices[11 * i + 6 ] = normals  [3 * i    ];
-         vertices[11 * i + 7 ] = normals  [3 * i + 1];
-         vertices[11 * i + 8 ] = normals  [3 * i + 2];
-         vertices[11 * i + 9 ] = texCoords[2 * i    ];
-         vertices[11 * i + 10] = texCoords[2 * i + 1];
-
+   public static short[] buildDiskIndices() {
+      short[] indices = new short[LEVEL_OF_DETAIL * 3];
+      for (int i = 0; i < LEVEL_OF_DETAIL; i++) {
+         indices[3 * i    ] = (short) (i                  );
+         indices[3 * i + 1] = (short) (LEVEL_OF_DETAIL + 1);
+         indices[3 * i + 2] = (short) (i               + 1);
       }
-      return new float[0];
-   }*/
+      return indices;
+   }
+
+   public static float[] buildDiskColors(int[] sideColors, float blendRate) {
+      float[] colors = new float[(LEVEL_OF_DETAIL + 2) * 3];
+
+      float[][] sideColorsRGB = new float[sideColors.length][3];
+      for (int i = 0; i < sideColors.length; i++) {
+         sideColorsRGB[i][0] = Color.red(sideColors[i]) / 255.f;
+         sideColorsRGB[i][1] = Color.green(sideColors[i]) / 255.f;
+         sideColorsRGB[i][2] = Color.blue(sideColors[i]) / 255.f;
+      }
+
+      for (int i = 0; i < LEVEL_OF_DETAIL; i++) {
+         float rate = ((float) i * sideColors.length) / LEVEL_OF_DETAIL;
+         int j = (int) Math.floor(rate);
+         rate -= j;
+         float blendR;
+         float blendG;
+         float blendB;
+         if (blendRate <= rate && rate <= 1 - blendRate) {
+            blendR = sideColorsRGB[j][0];
+            blendG = sideColorsRGB[j][1];
+            blendB = sideColorsRGB[j][2];
+         }
+         else if (blendRate > rate) {
+            int before = (j + sideColors.length - 1) % sideColors.length;
+            blendR = (sideColorsRGB[j][0] * (rate + blendRate) + sideColorsRGB[before][0] * (blendRate - rate)) / (2 * blendRate);
+            blendG = (sideColorsRGB[j][1] * (rate + blendRate) + sideColorsRGB[before][1] * (blendRate - rate)) / (2 * blendRate);
+            blendB = (sideColorsRGB[j][2] * (rate + blendRate) + sideColorsRGB[before][2] * (blendRate - rate)) / (2 * blendRate);
+         }
+         else {
+            int next = (j + 1)%sideColors.length;
+            blendR = (sideColorsRGB[j][0] * (1 - rate + blendRate) + sideColorsRGB[next][0] * (rate + blendRate - 1)) / (2 * blendRate);
+            blendG = (sideColorsRGB[j][1] * (1 - rate + blendRate) + sideColorsRGB[next][1] * (rate + blendRate - 1)) / (2 * blendRate);
+            blendB = (sideColorsRGB[j][2] * (1 - rate + blendRate) + sideColorsRGB[next][2] * (rate + blendRate - 1)) / (2 * blendRate);
+         }
+         colors[3 * i    ] = blendR;
+         colors[3 * i + 1] = blendG;
+         colors[3 * i + 2] = blendB;
+      }
+      colors[3 * LEVEL_OF_DETAIL    ] = colors[0];
+      colors[3 * LEVEL_OF_DETAIL + 1] = colors[1];
+      colors[3 * LEVEL_OF_DETAIL + 2] = colors[2];
+      colors[3 * LEVEL_OF_DETAIL + 3] = 1.f;
+      colors[3 * LEVEL_OF_DETAIL + 4] = 1.f;
+      colors[3 * LEVEL_OF_DETAIL + 5] = 1.f;
+      return colors;
+   }
+
+   public static float[] buildDiskNormals() {
+      float[] normals = new float[(LEVEL_OF_DETAIL + 2) * 3];
+      for (int i = 0; i < LEVEL_OF_DETAIL + 1; i++) {
+         normals[3 * i    ] = -(float)Math.cos(2 * Math.PI / LEVEL_OF_DETAIL * i);
+         normals[3 * i + 1] = -(float)Math.sin(2 * Math.PI / LEVEL_OF_DETAIL * i);
+         normals[3 * i + 2] = 0.f;
+      }
+      normals[3 * LEVEL_OF_DETAIL + 3] = 0.f;
+      normals[3 * LEVEL_OF_DETAIL + 4] = 0.f;
+      normals[3 * LEVEL_OF_DETAIL + 5] = -1.f;
+      return normals;
+   }
+
+   public static float[] buildDiskTexCoords() {
+      float[] texCoords = new float[(LEVEL_OF_DETAIL + 2) * 2];
+      for (int i = 0; i < LEVEL_OF_DETAIL + 1; i++) {
+         texCoords[2 * i    ] = (float)Math.cos(2 * Math.PI / LEVEL_OF_DETAIL * i) / 2.0f + 0.5f;
+         texCoords[2 * i + 1] = (float)Math.sin(2 * Math.PI / LEVEL_OF_DETAIL * i) / 2.0f + 0.5f;
+      }
+      texCoords[2 * LEVEL_OF_DETAIL + 2] = 0.5f;
+      texCoords[2 * LEVEL_OF_DETAIL + 3] = 0.5f;
+      return texCoords;
+   }
 }

@@ -18,14 +18,14 @@ public class NoteShape extends Shape {
       super(context);
       this.radius = radius;
       this.width = width;
-      setMaterial(1.f, new float[]{0.9f, 0.9f, 0.9f});
+      setMaterial(0.4f, new float[]{0.5f, 0.5f, 0.5f});
    }
 
    public NoteShape(Context context) {
       super(context);
       this.radius = 10.f;
       this.width = 2.f;
-      setMaterial(1.f, new float[]{0.9f, 0.9f, 0.9f});
+      setMaterial(0.4f, new float[]{0.5f, 0.5f, 0.5f});
    }
 
    @Override
@@ -64,7 +64,7 @@ public class NoteShape extends Shape {
       for (int i = 0; i < count; i++) {
          Matrix.setIdentityM(worlds[i], 0);
          Matrix.translateM(worlds[i], 0, 0, 0, (float) z[i]);
-         colors[i][0] = colors[i][1] = colors[i][2] = 1.f; //temporal
+         colors[i][0] = colors[i][1] = colors[i][2] = 0.f; //temporal
       }
 
       setWorlds(worlds);

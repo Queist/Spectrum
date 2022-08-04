@@ -227,6 +227,7 @@ public abstract class Shape {
     protected void draw(int count, int[] startOffset, int[] length) {
         GLES30.glUseProgram(program);
         GLES30.glFrontFace(GLES30.GL_CCW);
+        GLES30.glEnable(GLES30.GL_DEPTH_TEST);
 
         bindVerticesAndIndices();
         bindMainPassCB();

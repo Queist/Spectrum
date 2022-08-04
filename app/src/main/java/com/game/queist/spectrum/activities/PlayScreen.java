@@ -37,6 +37,7 @@ import com.game.queist.spectrum.R;
 import com.game.queist.spectrum.chart.Chart;
 import com.game.queist.spectrum.chart.EffectFlag;
 import com.game.queist.spectrum.chart.Note;
+import com.game.queist.spectrum.shape.BlankingShape;
 import com.game.queist.spectrum.shape.LaneShape;
 import com.game.queist.spectrum.shape.NoteShape;
 import com.game.queist.spectrum.shape.Shape;
@@ -131,6 +132,7 @@ public class PlayScreen extends AppCompatActivity implements GLSurfaceView.Rende
 
     NoteShape noteShape;
     LaneShape laneShape;
+    BlankingShape blankingShape;
 
 
     @Override
@@ -1248,23 +1250,27 @@ public class PlayScreen extends AppCompatActivity implements GLSurfaceView.Rende
     @Override
     public void onSurfaceCreated(GL10 gl10, EGLConfig eglConfig) {
         GLES30.glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+        GLES30.glClearDepthf(1.f);
 
         noteShape = new NoteShape(this);
         laneShape = new LaneShape(this);
+        blankingShape = new BlankingShape(this);
+
         noteShape.initialize();
         laneShape.initialize();
+        blankingShape.initialize();
 
         Shape.setCamara(new float[]{0.f, 0.f, -11.f}, new float[]{0.f, 0.f, 0.f});
         Shape.setProj(90.f, ((float) width)/height, 10.5f, 1000.f);
 
         Shape.setLight(new float[]{
                 0.f, 0.f, -5.f,
-                0.f, 0.f, 10.f,
-                0.f, 0.f, 50.f,
+                0.f, 0.f, 40.f,
+                0.f, 0.f, 20.f,
         }, new float[]{
-                100.f, 100.f, 100.f,
-                5.f, 5.f, 5.f,
-                10.f, 10.f, 10.f
+                00.f, 00.f, 00.f,
+                0.f, 0.f, 0.f,
+                80.f, 80.f, 80.f
         });
         now = System.nanoTime();
     }
@@ -1282,7 +1288,9 @@ public class PlayScreen extends AppCompatActivity implements GLSurfaceView.Rende
         double t = 50.0 - (elapsedTime - (double) ((int)Math.floor(elapsedTime) / 5) * 5) * 10;
 
         GLES30.glClear(GLES30.GL_COLOR_BUFFER_BIT);
+        GLES30.glClear(GLES30.GL_DEPTH_BUFFER_BIT);
         laneShape.draw();
+        blankingShape.draw();
         noteShape.draw(3, new int[]{0, 0, 1}, new double[]{0.0, 0.0, 4.0}, new double[]{10.0, 10.0, 10.0}, new double[]{0.0, 5.0, t});
     }
 }

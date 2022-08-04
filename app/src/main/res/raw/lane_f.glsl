@@ -54,5 +54,5 @@ void main() {
         vec3 strength = max(dot(-dist, normal), 0.0) * (dampling * lightColor[i]);
         result += BlinnPhong(strength, -dist, normal, toEye, shininess, fresnelR0, finalColor);
     }
-    fragColor = vec4(result + 0.05 * finalColor, 1.0);
+    fragColor = vec4(result + 0.2 * finalColor, 1.0);
 }

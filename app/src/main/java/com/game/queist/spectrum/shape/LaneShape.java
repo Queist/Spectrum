@@ -18,9 +18,9 @@ public class LaneShape extends Shape {
 
    protected float[] colors;
 
-   private float radius;
-   private float width;
-   private float blendRate;
+   protected float radius;
+   protected float width;
+   protected float blendRate;
 
    private int colorAttrIndex;
 
@@ -29,15 +29,15 @@ public class LaneShape extends Shape {
       this.radius = radius;
       this.width = width;
       this.blendRate = blendRate;
-      setMaterial(.5f, new float[]{0.7f, 0.7f, 0.7f});
+      setMaterial(.4f, new float[]{0.04f, 0.04f, 0.04f});
    }
 
    public LaneShape(Context context) {
       super(context);
       this.radius = 10.5f;
-      this.width = 1000.f;
+      this.width = 20.f;
       this.blendRate = .166667f;
-      setMaterial(.5f, new float[]{0.7f, 0.7f, 0.7f});
+      setMaterial(.4f, new float[]{0.04f, 0.04f, 0.04f});
    }
 
    @Override
