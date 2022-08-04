@@ -16,5 +16,5 @@ void main() {
     gl_Position = proj * view * world * vec4(position, 1.0);
     f_Normal = normal;
     f_TexCoords = texCoords;
-    f_VPosition = vec4(position, 1.0);
+    f_VPosition = world * vec4(position, 1.0);
 }

@@ -1257,7 +1257,16 @@ public class PlayScreen extends AppCompatActivity implements GLSurfaceView.Rende
         Shape.setCamara(new float[]{0.f, 0.f, -11.f}, new float[]{0.f, 0.f, 0.f});
         Shape.setProj(90.f, ((float) width)/height, 10.5f, 1000.f);
 
-        Shape.setLight(new float[]{0.f, 0.f, -15.f}, new float[]{5.5f, 5.5f, 5.5f});
+        Shape.setLight(new float[]{
+                0.f, 0.f, -5.f,
+                0.f, 0.f, 10.f,
+                0.f, 0.f, 50.f,
+        }, new float[]{
+                100.f, 100.f, 100.f,
+                5.f, 5.f, 5.f,
+                10.f, 10.f, 10.f
+        });
+        now = System.nanoTime();
     }
 
     @Override
@@ -1269,9 +1278,12 @@ public class PlayScreen extends AppCompatActivity implements GLSurfaceView.Rende
 
     @Override
     public void onDrawFrame(GL10 gl10) {
+        double elapsedTime = (System.nanoTime() - now) / 1000000000.0;
+        double t = 50.0 - (elapsedTime - (double) ((int)Math.floor(elapsedTime) / 5) * 5) * 10;
+
         GLES30.glClear(GLES30.GL_COLOR_BUFFER_BIT);
         laneShape.draw();
-        noteShape.draw(3, new int[]{0, 0, 1}, new double[]{0.0, 0.0, 4.0}, new double[]{10.0, 10.0, 10.0}, new double[]{0.0, 3.0, 5.0});
+        noteShape.draw(3, new int[]{0, 0, 1}, new double[]{0.0, 0.0, 4.0}, new double[]{10.0, 10.0, 10.0}, new double[]{0.0, 5.0, t});
     }
 }
 

@@ -29,7 +29,7 @@ public class LaneShape extends Shape {
       this.radius = radius;
       this.width = width;
       this.blendRate = blendRate;
-      setMaterial(0.8f, new float[]{0.08f, 0.08f, 0.08f});
+      setMaterial(.5f, new float[]{0.7f, 0.7f, 0.7f});
    }
 
    public LaneShape(Context context) {
@@ -37,7 +37,7 @@ public class LaneShape extends Shape {
       this.radius = 10.5f;
       this.width = 1000.f;
       this.blendRate = .166667f;
-      setMaterial(0.8f, new float[]{0.08f, 0.08f, 0.08f});
+      setMaterial(.5f, new float[]{0.7f, 0.7f, 0.7f});
    }
 
    @Override

@@ -37,8 +37,8 @@ public abstract class Shape {
     private static float[] proj = new float[16];
 
     /*Light*/
-    private static float[] lightPosition = new float[3];
-    private static float[] lightColor = new float[3];
+    private static float[] lightPosition = new float[3 * 3];
+    private static float[] lightColor = new float[3 * 3];
 
 
     private float shininess;
@@ -211,10 +211,10 @@ public abstract class Shape {
 
         /*Light*/
         int lightPositionHandle = GLES30.glGetUniformLocation(program, "lightPosition");
-        GLES30.glUniform3fv(lightPositionHandle, 1, lightPosition,0);
+        GLES30.glUniform3fv(lightPositionHandle, 3, lightPosition,0);
 
         int lightColorHandle = GLES30.glGetUniformLocation(program, "lightColor");
-        GLES30.glUniform3fv(lightColorHandle, 1, lightColor,0);
+        GLES30.glUniform3fv(lightColorHandle, 3, lightColor,0);
 
         /*Material*/
         int shininessHandle = GLES30.glGetUniformLocation(program, "shininess");

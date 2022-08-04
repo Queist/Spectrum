@@ -18,14 +18,14 @@ public class NoteShape extends Shape {
       super(context);
       this.radius = radius;
       this.width = width;
-      setMaterial(0.8f, new float[]{0.08f, 0.08f, 0.08f});
+      setMaterial(1.f, new float[]{0.9f, 0.9f, 0.9f});
    }
 
    public NoteShape(Context context) {
       super(context);
       this.radius = 10.f;
-      this.width = 1.f;
-      setMaterial(0.8f, new float[]{0.08f, 0.08f, 0.08f});
+      this.width = 2.f;
+      setMaterial(1.f, new float[]{0.9f, 0.9f, 0.9f});
    }
 
    @Override
