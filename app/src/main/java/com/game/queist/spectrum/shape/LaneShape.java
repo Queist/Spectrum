@@ -104,6 +104,7 @@ public class LaneShape extends Shape {
       float[][] worlds = new float[1][16];
       Matrix.setIdentityM(worlds[0], 0);
       setWorlds(worlds);
+      setTexTransform(worlds);
       draw(1, new int[]{0}, new int[]{indices.length});
    }
 }

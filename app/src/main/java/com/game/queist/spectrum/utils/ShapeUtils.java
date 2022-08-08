@@ -183,9 +183,9 @@ public class ShapeUtils {
       colors[3 * LEVEL_OF_DETAIL    ] = colors[0];
       colors[3 * LEVEL_OF_DETAIL + 1] = colors[1];
       colors[3 * LEVEL_OF_DETAIL + 2] = colors[2];
-      colors[3 * LEVEL_OF_DETAIL + 3] = 1.f;
-      colors[3 * LEVEL_OF_DETAIL + 4] = 1.f;
-      colors[3 * LEVEL_OF_DETAIL + 5] = 1.f;
+      colors[3 * LEVEL_OF_DETAIL + 3] = .6f;
+      colors[3 * LEVEL_OF_DETAIL + 4] = .6f;
+      colors[3 * LEVEL_OF_DETAIL + 5] = .6f;
       return colors;
    }
 

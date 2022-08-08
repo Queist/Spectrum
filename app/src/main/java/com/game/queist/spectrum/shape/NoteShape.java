@@ -1,10 +1,16 @@
 package com.game.queist.spectrum.shape;
 
 import android.content.Context;
+import android.graphics.Color;
 import android.opengl.GLES30;
 import android.opengl.Matrix;
 
+import com.game.queist.spectrum.R;
+import com.game.queist.spectrum.chart.Note;
 import com.game.queist.spectrum.utils.ShapeUtils;
+import com.game.queist.spectrum.utils.Utility;
+
+import java.util.ArrayList;
 
 import androidx.annotation.IntRange;
 
@@ -35,6 +41,8 @@ public class NoteShape extends Shape {
       texCoords = ShapeUtils.buildCylinderTexCoords();
 
       indices = ShapeUtils.buildCylinderIndices();
+
+      createTexture(R.drawable.note);
    }
 
    @Override
@@ -43,44 +51,45 @@ public class NoteShape extends Shape {
       setFragmentShader("note_f");
    }
 
-   public void draw(int count, @IntRange(from=0, to=3) int[] quadrant, double[] start, double[] end, double[] z) {
+   public void draw(int count, int[] quadrant, ArrayList<Note> note, double[] z) {
       int[] startOffset = new int[count];
       int[] length = new int[count];
 
-      for (int i = 0; i < count; i++) {
-         if (quadrant[i]%2 == 0) {
-            startOffset[i] = (int)((indices.length / 24) * quadrant[i] + (indices.length / 240) * (10 - end[i])) * 6;
-            length[i] = (int)((indices.length / 240) * (end[i] - start[i])) * 6;
-         }
-         else {
-            startOffset[i] = (int)((indices.length / 24) * quadrant[i] + (indices.length / 240) * start[i]) * 6;
-            length[i] = (int)((indices.length / 240) * (end[i] - start[i])) * 6;
-         }
-      }
-
       float[][] worlds = new float[count][16];
       float[][] colors = new float[count][3];
+      float[][] texTransform = new float[count][16];
 
       for (int i = 0; i < count; i++) {
+         float start = (float) note.get(i).getPosition1();
+         float end = (float) note.get(i).getPosition2();
+         if (start > end) {
+            float t = start;
+            start = end;
+            end = t;
+         }
+         if (quadrant[i]%2 == 0) {
+            startOffset[i] = (int)((indices.length / 24) * quadrant[i] + (indices.length / 240) * (10 - end)) * 6;
+            length[i] = (int)((indices.length / 240) * (end - start)) * 6;
+         }
+         else {
+            startOffset[i] = (int)((indices.length / 24) * quadrant[i] + (indices.length / 240) * start) * 6;
+            length[i] = (int)((indices.length / 240) * (end - start)) * 6;
+         }
+
          Matrix.setIdentityM(worlds[i], 0);
          Matrix.translateM(worlds[i], 0, 0, 0, (float) z[i]);
-         colors[i][0] = colors[i][1] = colors[i][2] = 0.f; //temporal
+         colors[i][0] = Color.red(Utility.getNoteRGB(note.get(i).getColor())) / 255.f;
+         colors[i][1] = Color.green(Utility.getNoteRGB(note.get(i).getColor())) / 255.f;
+         colors[i][2] = Color.blue(Utility.getNoteRGB(note.get(i).getColor())) / 255.f;
+         Matrix.setIdentityM(texTransform[i], 0);
+         Matrix.scaleM(texTransform[i], 0, 1 / (end / 40.0f - start / 40.0f), 1, 1);
       }
 
       setWorlds(worlds);
       setColors(colors);
+      setTexTransform(texTransform);
 
       draw(count, startOffset, length);
-      /*if (quadrant%2 == 0) {
-         draw(
-                 (int)(((indices.length - 6) / 24) * quadrant + ((indices.length - 6) / 240) * (10 - end)) * 6,
-                 (int)(((indices.length - 6) / 240) * (end - start)) * 6 + 6);
-      }
-      else {
-         draw(
-                 (int)(((indices.length - 6) / 24) * quadrant + ((indices.length - 6) / 240) * start) * 6,
-                 (int)(((indices.length - 6) / 240) * (end - start)) * 6 + 6);
-      }*/
    }
 
    @Override

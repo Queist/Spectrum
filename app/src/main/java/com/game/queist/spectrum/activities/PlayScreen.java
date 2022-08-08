@@ -107,14 +107,16 @@ public class PlayScreen extends AppCompatActivity implements GLSurfaceView.Rende
     Thread thread;
     Handler handler;
     android.graphics.Canvas canvas;
-    public long start;
-    public long offset;
-    public long pausedTime;
-    public long pausedClock;
-    public long now;
-    public long dt;
-    public double currentBit;
-    public double bitInScreen;
+    private long start;
+    private long offset;
+    private long pausedTime;
+    private long pausedClock;
+    private long now;
+    private long dt;
+    private double currentBit;
+    private double bitInScreen;
+    private double rotateAngle;
+
     ArrayList<Note>[] queryNotes;
     ArrayList<Note>[] screenNotes;
     LinkedList<Note>[] noteBuffer;
@@ -190,7 +192,7 @@ public class PlayScreen extends AppCompatActivity implements GLSurfaceView.Rende
         int touchedLine = inJudgeLine(posX, posY);
         if (touchedLine >= 0 && !screenNotes[touchedLine].isEmpty()) {
             ArrayList<Note> notes = Utility.getNextNotes(screenNotes[touchedLine]);
-            currentBit = updateCurrentBit();
+            updateCurrentBit();
             for (Note note : notes) {
                 if (isCorrectPosition(note.getPosition1(), note.getPosition2(), posX, posY, touchedLine)) {
                     if (note.getKind().equals(Note.TAB)) {
@@ -850,10 +852,11 @@ public class PlayScreen extends AppCompatActivity implements GLSurfaceView.Rende
     }
 
     private void surfaceUpdate() {
-        currentBit = updateCurrentBit();
+        updateCurrentBit();
 
         int s;
 
+        /*Culling Start*/
         for (int i = 0; i < SIDE_NUM; i++) {
             s = noteBuffer[i].size();
             for (int j = 0; j < s; j++) {
@@ -1155,10 +1158,9 @@ public class PlayScreen extends AppCompatActivity implements GLSurfaceView.Rende
         return it;
     }
 
-    public double updateCurrentBit() {
+    public void updateCurrentBit() {
         currentBit = chart.nanosToBit((long) (chart.bitToNanos(currentBit) + System.nanoTime() - time));
         time = System.nanoTime();
-        return currentBit;
     }
 
     private void drawBG(Canvas canvas) {
@@ -1284,14 +1286,15 @@ public class PlayScreen extends AppCompatActivity implements GLSurfaceView.Rende
 
     @Override
     public void onDrawFrame(GL10 gl10) {
-        double elapsedTime = (System.nanoTime() - now) / 1000000000.0;
-        double t = 50.0 - (elapsedTime - (double) ((int)Math.floor(elapsedTime) / 5) * 5) * 10;
+        updateCurrentBit();
 
         GLES30.glClear(GLES30.GL_COLOR_BUFFER_BIT);
         GLES30.glClear(GLES30.GL_DEPTH_BUFFER_BIT);
         laneShape.draw();
         blankingShape.draw();
-        noteShape.draw(3, new int[]{0, 0, 1}, new double[]{0.0, 0.0, 4.0}, new double[]{10.0, 10.0, 10.0}, new double[]{0.0, 5.0, t});
+        /*TODO : Cull And Render Note*/
+        //noteShape.draw(3, new int[]{0, 0, 1}, new double[]{0.0, 0.0, 4.0}, new double[]{10.0, 10.0, 10.0}, new double[]{0.0, 5.0, t});
+        noteShape.draw(1, new int[]{0}, queryNotes[0], new double[]{8.0});
     }
 }
 
