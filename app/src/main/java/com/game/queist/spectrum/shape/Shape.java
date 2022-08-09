@@ -249,7 +249,13 @@ public abstract class Shape {
         GLES30.glUseProgram(program);
         GLES30.glFrontFace(GLES30.GL_CCW);
         GLES30.glEnable(GLES30.GL_DEPTH_TEST);
+        GLES30.glEnable(GLES30.GL_POLYGON_OFFSET_FILL);
         GLES30.glDepthFunc(GLES30.GL_LEQUAL);
+        GLES30.glPolygonOffset(0.f, 100000000.f);
+
+        GLES30.glEnable(GLES30.GL_BLEND);
+        GLES30.glBlendFunc(GLES30.GL_SRC_ALPHA, GLES30.GL_ONE_MINUS_SRC_ALPHA);
+        GLES30.glBlendEquation(GLES30.GL_FUNC_ADD);
 
         bindVerticesAndIndices();
         bindMainPassCB();

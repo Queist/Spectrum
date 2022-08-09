@@ -29,7 +29,7 @@ public class NoteShape extends Shape {
 
    public NoteShape(Context context) {
       super(context);
-      this.radius = 10.f;
+      this.radius = 10.5f;
       this.width = 2.f;
       setMaterial(0.4f, new float[]{0.5f, 0.5f, 0.5f});
    }
@@ -42,7 +42,7 @@ public class NoteShape extends Shape {
 
       indices = ShapeUtils.buildCylinderIndices();
 
-      createTexture(R.drawable.note);
+      createTexture(R.drawable.note_v2);
    }
 
    @Override

@@ -43,9 +43,16 @@ vec3 BlinnPhong(vec3 lightStrength, vec3 lightVec, vec3 normal, vec3 toEye, floa
 }
 
 void main() {
-    vec4 finalColor = vec4(color, 1.0) * texture(texture1, (texTransform * vec4(f_TexCoords, 1.0, 1.0)).xy);
+    vec4 finalColor;
+    vec4 textureColor = texture(texture1, (texTransform * vec4(f_TexCoords, 1.0, 1.0)).xy);
+    if (textureColor.a == 1.0) {
+        finalColor = vec4(1.0, 1.0, 1.0, 1.0);
+    }
+    else {
+        finalColor = vec4(color, 1.0) * textureColor;
+    }
 
-    if (finalColor.w < 0.05) discard;
+    if (finalColor.a < 0.05) discard;
 
     vec3 normal = normalize(f_Normal);
     //float dampling = 1.0 - clamp((length(distF) - 1.0) / 500.0, 0.0, 0.99);
@@ -61,5 +68,5 @@ void main() {
     }
     result = result + 0.2 * finalColor.xyz;
     result = (result + 3.0 * finalColor.xyz) / 4.0;
-    fragColor = vec4(result, 1.0);
+    fragColor = vec4(result, finalColor.a);
 }
