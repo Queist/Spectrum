@@ -51,7 +51,7 @@ public class NoteShape extends Shape {
       setFragmentShader("note_f");
    }
 
-   public void draw(int count, int[] quadrant, ArrayList<Note> note, double[] z) {
+   public void draw(int count, int quadrant, ArrayList<Note> note, double[] z) {
       int[] startOffset = new int[count];
       int[] length = new int[count];
 
@@ -67,12 +67,12 @@ public class NoteShape extends Shape {
             start = end;
             end = t;
          }
-         if (quadrant[i]%2 == 0) {
-            startOffset[i] = (int)((indices.length / 24) * quadrant[i] + (indices.length / 240) * (10 - end)) * 6;
+         if (quadrant%2 == 0) {
+            startOffset[i] = (int)((indices.length / 24) * quadrant + (indices.length / 240) * (10 - end)) * 6;
             length[i] = (int)((indices.length / 240) * (end - start)) * 6;
          }
          else {
-            startOffset[i] = (int)((indices.length / 24) * quadrant[i] + (indices.length / 240) * start) * 6;
+            startOffset[i] = (int)((indices.length / 24) * quadrant + (indices.length / 240) * start) * 6;
             length[i] = (int)((indices.length / 240) * (end - start)) * 6;
          }
 
@@ -82,7 +82,10 @@ public class NoteShape extends Shape {
          colors[i][1] = Color.green(Utility.getNoteRGB(note.get(i).getColor())) / 255.f;
          colors[i][2] = Color.blue(Utility.getNoteRGB(note.get(i).getColor())) / 255.f;
          Matrix.setIdentityM(texTransform[i], 0);
-         Matrix.scaleM(texTransform[i], 0, 1 / (end / 40.0f - start / 40.0f), 1, 1);
+         System.out.println(start);
+         System.out.println(end);
+         Matrix.scaleM(texTransform[i], 0, 1 / texCoords[length[i] * 4 / 6], 1, 1);
+         Matrix.translateM(texTransform[i], 0, -texCoords[startOffset[i] * 4 / 6], 0, 0);
       }
 
       setWorlds(worlds);

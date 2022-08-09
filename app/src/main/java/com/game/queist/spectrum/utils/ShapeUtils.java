@@ -3,7 +3,7 @@ package com.game.queist.spectrum.utils;
 import android.graphics.Color;
 
 public class ShapeUtils {
-   public static int LEVEL_OF_DETAIL = 120;
+   public static int LEVEL_OF_DETAIL = 160;
 
    public static float[] buildCylinderPositions(float radius, float width) {
       float[] vertices = new float[(LEVEL_OF_DETAIL + 1) * 2 * 3];
@@ -114,6 +114,7 @@ public class ShapeUtils {
          texCoords[4 * i + 1] = 1.f;
          texCoords[4 * i + 2] = 1.f / LEVEL_OF_DETAIL * i;
          texCoords[4 * i + 3] = 0.f;
+         System.out.println(texCoords[4 * i]);
       }
       return texCoords;
    }
