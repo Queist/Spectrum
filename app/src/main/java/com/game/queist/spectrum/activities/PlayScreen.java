@@ -67,6 +67,8 @@ public class PlayScreen extends AppCompatActivity implements GLSurfaceView.Rende
     public final static String GOOD = "GOOD";
     public final static String PERFECT = "PERFECT";
 
+    private final static double BASE_Z = 20.0;
+
     public Chart chart;
     public static MediaPlayer bgm;
     public static MediaPlayer keySound;
@@ -1274,7 +1276,8 @@ public class PlayScreen extends AppCompatActivity implements GLSurfaceView.Rende
                 0.f, 0.f, 0.f,
                 80.f, 80.f, 80.f
         });
-        now = System.nanoTime();
+        time = System.nanoTime();
+        bgm.start();
     }
 
     @Override
@@ -1290,11 +1293,127 @@ public class PlayScreen extends AppCompatActivity implements GLSurfaceView.Rende
 
         GLES30.glClear(GLES30.GL_COLOR_BUFFER_BIT);
         GLES30.glClear(GLES30.GL_DEPTH_BUFFER_BIT);
-        laneShape.draw();
-        blankingShape.draw();
+
         /*TODO : Cull And Render Note*/
         //noteShape.draw(3, new int[]{0, 0, 1}, new double[]{0.0, 0.0, 4.0}, new double[]{10.0, 10.0, 10.0}, new double[]{0.0, 5.0, t});
-        noteShape.draw(1, new int[]{0}, queryNotes[0], new double[]{8.0});
+        cull();
+        laneShape.draw();
+        blankingShape.draw();
+        for (int i = 0; i < SIDE_NUM; i++) {
+            noteShape.draw(screenNotes[i].size(), i, screenNotes[i], getZ(i));
+        }
+    }
+
+    private void cull() {
+        int count;
+
+        for (int i = 0; i < SIDE_NUM; i++) {
+            count = noteBuffer[i].size();
+            for (int j = 0; j < count; j++) {
+                screenNotes[i].remove(noteBuffer[i].getFirst());
+                noteBuffer[i].removeFirst();
+            }
+        }
+
+        for (int i = 0; i < SIDE_NUM; i++) {
+            count = slideBuffer[i].size();
+            for (int j = 0; j < count; j++) {
+                slidePosSet[i].remove(slideBuffer[i].getFirst());
+                slideBuffer[i].removeFirst();
+            }
+        }
+
+        for (Iterator<Double> iterator = queryLines.iterator(); iterator.hasNext();) {
+            double bit = iterator.next();
+            if (bit - bitInScreen < currentBit ) {
+                screenLines.add(bit);
+                iterator.remove();
+            }
+            else break;
+        }
+
+        screenLines.removeIf(bit -> chart.bitToNanos(currentBit) > chart.bitToNanos(bit));
+
+        for (int i=0; i < SIDE_NUM; i++) {
+
+            for (Iterator<Note> iterator = queryNotes[i].iterator(); iterator.hasNext();) {
+                Note note = iterator.next();
+                if (note.getBit() - bitInScreen < currentBit ) {
+                    screenNotes[i].add(note);
+                    iterator.remove();
+                }
+                else break;
+            }
+
+            for (Iterator<Note> iterator = screenNotes[i].iterator(); iterator.hasNext();) {
+                boolean removed = false;
+                Note note = iterator.next();
+                if (chart.bitToNanos(note.getBit()) - chart.bitToNanos(currentBit) < JUDGE_TIME_PERFECT * 1000000
+                        && note.getKind().equals(Note.SLIDE)) { //슬라판정 레이트인 경우 고려하기.
+                    for (Double pos : slidePosSet[i]) {
+                        if (note.getPosition1() - 0.5 < pos && pos < note.getPosition2() + 0.5) {
+                            if (chart.bitToNanos(currentBit) - chart.bitToNanos(note.getBit()) > JUDGE_TIME_GOOD * 1000000) {
+                                makeJudge(note, i, BAD);
+                                iterator.remove();
+                                removed = true;
+                                break;
+                            }
+                            else if ((note.getColor() == -1 || note.getColor() == screenColor[i])
+                                    && chart.bitToNanos(currentBit) - chart.bitToNanos(note.getBit()) > JUDGE_TIME_PERFECT * 1000000) {
+                                makeJudge(note, i, GOOD);
+                                iterator.remove();
+                                removed = true;
+                                break;
+                            }
+                            else if (note.getColor() == -1 || note.getColor() == screenColor[i]) {
+                                makeJudge(note, i, PERFECT);
+                                iterator.remove();
+                                removed = true;
+                                break;
+                            }
+                        }
+                    }
+                    if (removed) continue;
+                }
+                if (chart.bitToNanos(currentBit) - chart.bitToNanos(note.getBit()) > -JUDGE_TIME_PERFECT //TODO: 나중에 수정
+                        && note.getKind().equals(Note.AUTO) && (note.getColor() == -1 || note.getColor() == screenColor[i])) {
+                    if (chart.bitToNanos(currentBit) - chart.bitToNanos(note.getBit()) < JUDGE_TIME_PERFECT * 1000000 ) {
+                        makeJudge(note, i, PERFECT);
+                    } else if (chart.bitToNanos(currentBit) - chart.bitToNanos(note.getBit()) < JUDGE_TIME_GOOD * 1000000 ) {
+                        makeJudge(note, i, GOOD);
+                    } else {
+                        makeJudge(note, i, BAD);
+                    }
+                    iterator.remove();
+                    continue;
+                }
+                if (chart.bitToNanos(currentBit) - chart.bitToNanos(note.getBit()) > JUDGE_TIME_BAD * 1000000 ) {
+                    if (note.getKind().equals(Note.AUTO)) {
+                        makeJudge(note, i, BAD);
+                    } else makeJudge(note, i, MISS);
+                    iterator.remove();
+                    continue;
+                }
+            }
+        }
+
+        count = effectBuffer.size();
+        for (int i = 0; i < count; i++) {
+            effectFlags.add(effectBuffer.getFirst());
+            effectBuffer.removeFirst();
+        }
+    }
+
+    private double[] getZ(int side) {
+        double[] z = new double[screenNotes[side].size()];
+        for (int i = 0; i < screenNotes[side].size(); i++) {
+            Note note = screenNotes[side].get(i);
+            if (note.getBit() < currentBit) z[i] = 0;
+            else {
+                z[i] = (note.getBit() - currentBit) / bitInScreen * BASE_Z;
+            }
+        }
+        return z;
     }
 }
 

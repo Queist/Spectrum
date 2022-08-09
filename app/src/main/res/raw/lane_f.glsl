@@ -10,6 +10,9 @@ uniform vec3 lightColor[3];
 uniform float shininess;
 uniform vec3 fresnelR0;
 
+uniform sampler2D texture1;
+uniform mat4 texTransform;
+
 layout (location = 0) in vec3 f_Color;
 layout (location = 1) in vec3 f_Normal;
 layout (location = 2) in vec2 f_TexCoords;
@@ -40,7 +43,9 @@ vec3 BlinnPhong(vec3 lightStrength, vec3 lightVec, vec3 normal, vec3 toEye, floa
 }
 
 void main() {
-    vec3 finalColor = f_Color;
+    vec4 finalColor = vec4(f_Color, 1.0);
+
+    if (finalColor.w < 0.05) discard;
 
     vec3 normal = normalize(f_Normal);
     //float dampling = 1.0 - clamp((length(distF) - 1.0) / 500.0, 0.0, 0.99);
@@ -52,7 +57,8 @@ void main() {
         vec3 dist = normalize(f_VPosition.xyz - lightPosition[i]);
         float dampling = 1.0 / pow(distF, 2.0);
         vec3 strength = max(dot(-dist, normal), 0.0) * (dampling * lightColor[i]);
-        result += BlinnPhong(strength, -dist, normal, toEye, shininess, fresnelR0, finalColor);
+        result += BlinnPhong(strength, -dist, normal, toEye, shininess, fresnelR0, finalColor.xyz);
     }
-    fragColor = vec4(result + 0.2 * finalColor, 1.0);
+    result = result + 0.2 * finalColor.xyz;
+    fragColor = vec4(result, 1.0);
 }

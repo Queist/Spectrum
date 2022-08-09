@@ -249,6 +249,7 @@ public abstract class Shape {
         GLES30.glUseProgram(program);
         GLES30.glFrontFace(GLES30.GL_CCW);
         GLES30.glEnable(GLES30.GL_DEPTH_TEST);
+        GLES30.glDepthFunc(GLES30.GL_LEQUAL);
 
         bindVerticesAndIndices();
         bindMainPassCB();

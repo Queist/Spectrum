@@ -4,6 +4,7 @@ import android.content.Context;
 import android.opengl.GLES30;
 import android.opengl.Matrix;
 
+import com.game.queist.spectrum.R;
 import com.game.queist.spectrum.activities.PlayScreen;
 import com.game.queist.spectrum.utils.ShapeUtils;
 import com.game.queist.spectrum.utils.Utility;
