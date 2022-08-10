@@ -456,6 +456,9 @@ public class PlayScreen extends AppCompatActivity implements GLSurfaceView.Rende
         }
 
         double min = line % 2 == 0 ? ((10 - end) / 10 + line) * (Math.PI / 2) : (start / 10 + line) * (Math.PI / 2);
+        min += rotateAngle;
+        double n = Math.ceil(-min / (2 * Math.PI));
+        min += 2 * Math.PI * n;
         double range = (end - start) / 10 * (Math.PI / 2);
         return  min <= angle && angle <= min + range;
     }
