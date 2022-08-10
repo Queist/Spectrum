@@ -5,7 +5,6 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.Color;
-import android.graphics.Matrix;
 import android.graphics.Paint;
 import android.graphics.Path;
 import android.graphics.Point;
@@ -13,6 +12,7 @@ import android.graphics.Typeface;
 import android.media.MediaPlayer;
 import android.opengl.GLES30;
 import android.opengl.GLSurfaceView;
+import android.opengl.Matrix;
 import android.os.Build;
 import android.os.Bundle;
 
@@ -510,6 +510,18 @@ public class PlayScreen extends AppCompatActivity implements GLSurfaceView.Rende
         return  ((x-x1) * (x - x2) < 0 && (y - y1) * (y - y2) < 0);
     }
 
+    private float[] screenPointToViewRay(float ex, float ey) {
+        float x = 2 * (ex / width - 0.5f);
+        float y = 2 * (ey / height - 0.5f);
+        float[] result = new float[4];
+        float[] tempMat = new float[16];
+        float[] screenRay = new float[]{x, y, 0.f, 1.f};
+        Matrix.invertM(tempMat, 0, Shape.getProj(), 0);
+        Matrix.multiplyMV(result, 0, tempMat, 0, screenRay, 0);
+
+        return result;
+    }
+
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -779,7 +791,7 @@ public class PlayScreen extends AppCompatActivity implements GLSurfaceView.Rende
         if (!lockTouchEvent) pauseButton.performClick();
     }
 
-    private void start() {
+    /*private void start() {
         try {
             if (Build.VERSION.SDK_INT > 25) canvas = surfaceView.getHolder().lockHardwareCanvas();
             else canvas = surfaceView.getHolder().lockCanvas();
@@ -851,327 +863,11 @@ public class PlayScreen extends AppCompatActivity implements GLSurfaceView.Rende
                 android.R.anim.fade_in, android.R.anim.fade_out).toBundle();
         startActivity(intent, bundle);
         finish();
-    }
-
-    private void surfaceUpdate() {
-        updateCurrentBit();
-
-        int s;
-
-        /*Culling Start*/
-        for (int i = 0; i < SIDE_NUM; i++) {
-            s = noteBuffer[i].size();
-            for (int j = 0; j < s; j++) {
-                screenNotes[i].remove(noteBuffer[i].getFirst());
-                noteBuffer[i].removeFirst();
-            }
-        }
-
-        for (int i = 0; i < SIDE_NUM; i++) {
-            s = slideBuffer[i].size();
-            for (int j = 0; j < s; j++) {
-                if (slidePosSet[i].contains(slideBuffer[i].getFirst())) slidePosSet[i].remove(slideBuffer[i].getFirst());
-                slideBuffer[i].removeFirst();
-            }
-        }
-
-        for (Iterator<Double> iterator = queryLines.iterator(); iterator.hasNext();) {
-            double bit = iterator.next();
-            if (bit - bitInScreen < currentBit ) {
-                screenLines.add(bit);
-                iterator.remove();
-            }
-            else break;
-        }
-
-        for (Iterator<Double> iterator = screenLines.iterator(); iterator.hasNext();) {
-            double bit = iterator.next();
-            if (chart.bitToNanos(currentBit) > chart.bitToNanos(bit)) iterator.remove();
-        }
-
-        for (int i=0; i < SIDE_NUM; i++) {
-
-            for (Iterator<Note> iterator = queryNotes[i].iterator(); iterator.hasNext();) {
-                Note note = iterator.next();
-                if (note.getBit() - bitInScreen < currentBit ) {
-                    screenNotes[i].add(note);
-                    iterator.remove();
-                }
-                else break;
-            }
-
-            for (Iterator<Note> iterator = screenNotes[i].iterator(); iterator.hasNext();) {
-                boolean removed = false;
-                Note note = iterator.next();
-                if (chart.bitToNanos(note.getBit()) - chart.bitToNanos(currentBit) < JUDGE_TIME_PERFECT * 1000000
-                    && note.getKind().equals(Note.SLIDE)) { //슬라판정 레이트인 경우 고려하기.
-                    for (Double pos : slidePosSet[i]) {
-                        if (note.getPosition1() - 0.5 < pos && pos < note.getPosition2() + 0.5) {
-                            if (chart.bitToNanos(currentBit) - chart.bitToNanos(note.getBit()) > JUDGE_TIME_GOOD * 1000000) {
-                                makeJudge(note, i, BAD);
-                                iterator.remove();
-                                removed = true;
-                                break;
-                            }
-                            else if ((note.getColor() == -1 || note.getColor() == screenColor[i])
-                                    && chart.bitToNanos(currentBit) - chart.bitToNanos(note.getBit()) > JUDGE_TIME_PERFECT * 1000000) {
-                                makeJudge(note, i, GOOD);
-                                iterator.remove();
-                                removed = true;
-                                break;
-                            }
-                            else if (note.getColor() == -1 || note.getColor() == screenColor[i]) {
-                                makeJudge(note, i, PERFECT);
-                                iterator.remove();
-                                removed = true;
-                                break;
-                            }
-                        }
-                    }
-                    if (removed) continue;
-                }
-                if (chart.bitToNanos(currentBit) - chart.bitToNanos(note.getBit()) > -JUDGE_TIME_PERFECT //TODO: 나중에 수정
-                        && note.getKind().equals(Note.AUTO) && (note.getColor() == -1 || note.getColor() == screenColor[i])) {
-                    if (chart.bitToNanos(currentBit) - chart.bitToNanos(note.getBit()) < JUDGE_TIME_PERFECT * 1000000 ) {
-                        makeJudge(note, i, PERFECT);
-                    } else if (chart.bitToNanos(currentBit) - chart.bitToNanos(note.getBit()) < JUDGE_TIME_GOOD * 1000000 ) {
-                        makeJudge(note, i, GOOD);
-                    } else {
-                        makeJudge(note, i, BAD);
-                    }
-                    iterator.remove();
-                    continue;
-                }
-                if (chart.bitToNanos(currentBit) - chart.bitToNanos(note.getBit()) > JUDGE_TIME_BAD * 1000000 ) {
-                    if (note.getKind().equals(Note.AUTO)) {
-                        makeJudge(note, i, BAD);
-                    } else makeJudge(note, i, MISS);
-                    iterator.remove();
-                    continue;
-                }
-            }
-        }
-
-        s = effectBuffer.size();
-        for (int i = 0; i < s; i++) {
-            effectFlags.add(effectBuffer.getFirst());
-            effectBuffer.removeFirst();
-        }
-    }
-
-    private void surfaceRender(Canvas canvas) {
-        //Fixing wrong screen color
-        if (colorFixFlag) {
-            colorQueryList.clear();
-            colorFixFlag = false;
-            for (int i = 0; i < SIDE_NUM; i++) {
-                int index = -1;
-                for (int j = 0; j < SIDE_NUM; j++) {
-                    if (correctColor[i] == screenColor[j]) {
-                        index = j;
-                        break;
-                    }
-                }
-                if (i != index) {
-                    Matrix matrix = new Matrix();
-                    if ((i+index)%4 == 3) matrix.setScale(1, -1);
-                    else if ((i+index)%4 == 1) matrix.setScale(-1, 1);
-                    else matrix.setScale(-1, -1);
-                    colorSide[i] = Bitmap.createBitmap(colorSide[i], 0, 0, colorSide[i].getWidth(), colorSide[i].getHeight(), matrix, false);
-                    colorSide[index] = Bitmap.createBitmap(colorSide[index], 0, 0, colorSide[index].getWidth(), colorSide[index].getHeight(), matrix, false);
-                    Bitmap temp = colorSide[i];
-                    colorSide[i] = colorSide[index];
-                    colorSide[index] = temp;
-                    int t = screenColor[i];
-                    screenColor[i] = screenColor[index];
-                    screenColor[index] = t;
-                }
-            }
-        }
-
-        //deal with swipe query
-        if (colorQueryList.size() > 0) {
-            int it = colorQueryList.get(0);
-            swap((it+3)%4, it);
-            Matrix matrix = new Matrix();
-            if (it%2==1) matrix.setScale(-1,1);
-            else matrix.setScale(1,-1);
-            colorSide[it] = Bitmap.createBitmap(colorSide[it],0,0,colorSide[it].getWidth(),colorSide[it].getHeight(),matrix,false);
-            colorSide[(it+SIDE_NUM-1)%SIDE_NUM] = Bitmap.createBitmap(colorSide[(it+SIDE_NUM-1)%SIDE_NUM],0,0,colorSide[(it+SIDE_NUM-1)%SIDE_NUM].getWidth(),colorSide[(it+SIDE_NUM-1)%SIDE_NUM].getHeight(),matrix,false);
-            Bitmap temp = colorSide[it];
-            colorSide[it] = colorSide[(it+SIDE_NUM-1)%SIDE_NUM];
-            colorSide[(it+SIDE_NUM-1)%SIDE_NUM] = temp;
-            colorQueryList.remove(0);
-        }
-
-        drawBG(canvas);
-
-        //TODO
-        /*double[][] infoN = new double[4][];
-        for (int i = 0; i < PlayScreen.SIDE_NUM; i++) infoN[i] = getInfoForDraw(currentBit + (2 - Math.sqrt(121.0/40)) * bitInScreen, currentBit, 0, 10, i);
-        Paint paintN = new Paint();
-        paintN.setColor(Color.BLACK);
-        paintN.setStrokeWidth((float) infoN[0][4]/6);
-        paintN.setStyle(Paint.Style.STROKE);
-        //paint.setMaskFilter(null);
-        paintN.setStrokeCap(Paint.Cap.ROUND);
-        Path pathN = new Path();
-        pathN.moveTo((float) infoN[0][0], (float) infoN[0][1]);
-        pathN.lineTo((float) infoN[1][2], (float) infoN[1][3]);
-        pathN.lineTo((float) infoN[2][0], (float) infoN[2][1]);
-        pathN.lineTo((float) infoN[3][2], (float) infoN[3][3]);
-        pathN.lineTo((float) infoN[0][0], (float) infoN[0][1]);
-        pathN.close();
-        canvas.drawPath(pathN, paintN);*/
-
-        //draw line
-        for (double bit : screenLines) {
-            double[][] info = new double[4][];
-            for (int i = 0; i < SIDE_NUM; i++) info[i] = getInfoForDraw(bit, currentBit, 0, 10, i);
-            Paint paint = new Paint();
-            paint.setColor(Utility.getEquivalenceLineColor());
-            paint.setStrokeWidth((float) info[0][4]/4);
-            paint.setStyle(Paint.Style.STROKE);
-            //paint.setMaskFilter(null);
-            paint.setStrokeCap(Paint.Cap.ROUND);
-            Path path = new Path();
-            path.moveTo((float) info[0][0], (float) info[0][1]);
-            path.lineTo((float) info[1][2], (float) info[1][3]);
-            path.lineTo((float) info[2][0], (float) info[2][1]);
-            path.lineTo((float) info[3][2], (float) info[3][3]);
-            path.lineTo((float) info[0][0], (float) info[0][1]);
-            path.close();
-            canvas.drawPath(path, paint);
-        }
-
-        //draw effect
-        if (effectFlags.size() > 0) {
-            EffectFlag recentEffect = effectFlags.get(effectFlags.size()-1);
-            Paint paint = new Paint();
-            paint.setColor(Color.WHITE);
-            if (recentEffect.getFrame()<5) paint.setTextSize((float)width/(20+recentEffect.getFrame()*2));
-            else paint.setTextSize((float)width/30);
-            paint.setTypeface(Typeface.create(Typeface.DEFAULT, Typeface.BOLD));
-            paint.setTextAlign(Paint.Align.CENTER);
-            paint.setTypeface(ResourcesCompat.getFont(this, R.font.black_han_sans));
-            float yPos = ((height / 2.0f) - ((paint.descent() + paint.ascent()) / 2));
-            canvas.drawText(recentEffect.getEffect(),(float)width/2,yPos,paint);
-
-            for (Iterator<EffectFlag> iterator = effectFlags.iterator(); iterator.hasNext();) {
-                EffectFlag effectFlag = iterator.next();
-                if (effectFlag.checkFrame()) {
-                    iterator.remove();
-                }
-                else if (effectFlag.getPosition1() >= 0) {
-                    double[] info = getInfoForDraw(effectFlag.getNoteBit(), effectFlag.getCurrBit(), effectFlag.getPosition1(), effectFlag.getPosition2(), effectFlag.getQuadrant());
-                    int[] color = Utility.getRGB(Utility.judgeToInteger(effectFlag.getEffect()), 160);
-                    paint.setARGB((255 * (EffectFlag.TOTAL_FRAME - effectFlag.getFrame()) * (EffectFlag.TOTAL_FRAME - effectFlag.getFrame()) / EffectFlag.TOTAL_FRAME / EffectFlag.TOTAL_FRAME), color[0],color[1],color[2]);
-                    paint.setStrokeWidth((float) info[4]);
-                    paint.setStyle(Paint.Style.FILL);
-                    //paint.setMaskFilter(null);
-                    paint.setStrokeCap(Paint.Cap.ROUND);
-                    canvas.drawLine((float) info[0],(float) info[1],(float) info[2],(float) info[3], paint);
-                    effectFlag.update();
-                }
-                else effectFlag.update();
-            }
-        }
-
-        //draw note
-        for (int i=0; i < SIDE_NUM; i++) {
-            for (Note note : screenNotes[i]) {
-                if (note.getKind().equals(Note.AUTO)) {
-                    double[] info = getInfoForDraw(note.getBit(), currentBit, 0, 10, i);
-                    int color = Utility.getNoteRGB(note.getColor());
-                    info[4] *= Math.sqrt((double)337/256)/2;
-                    Paint paint = new Paint();
-                    paint.setColor(color);
-                    paint.setStrokeWidth(1);
-                    paint.setStyle(Paint.Style.FILL);
-                    //paint.setMaskFilter(null);
-                    paint.setStrokeCap(Paint.Cap.ROUND);
-                    Path path = new Path();
-                    path.setFillType(Path.FillType.EVEN_ODD);
-                    path.moveTo((float) (info[0] - info[4] * (double) 16 / 9), (float) info[1]);
-                    path.lineTo((float) (info[0] + info[4] * (double) 16 / 9), (float) info[1]);
-                    if (i%2 == 1) {
-                        path.lineTo((float) info[2], (float) (info[3] + info[4]));
-                        path.lineTo((float) info[2], (float) (info[3] - info[4]));
-                    }
-                    else {
-                        path.lineTo((float) info[2], (float) (info[3] - info[4]));
-                        path.lineTo((float) info[2], (float) (info[3] + info[4]));
-                    }
-                    path.lineTo((float) (info[0] - info[4] * (double) 16 / 9), (float) info[1]);
-                    path.close();
-                    canvas.drawPath(path, paint);
-                }
-                else {
-                    double[] info = getInfoForDraw(note.getBit(), currentBit, note.getPosition1(), note.getPosition2(), i);
-                    int color = Utility.getNoteRGB(note.getColor());
-                    Paint paint = new Paint();
-                    paint.setColor(Color.WHITE);
-                    paint.setStrokeWidth((float) info[4]);
-                    paint.setStrokeCap(Paint.Cap.ROUND);
-                    /*paint.setStyle(Paint.Style.STROKE);
-                    paint.setMaskFilter(new BlurMaskFilter((float) (info[4]/2), BlurMaskFilter.Blur.OUTER));
-                    canvas.drawLine((float) info[0], (float) info[1], (float) info[2], (float) info[3], paint);*/
-                    if (note.getKind().equals(Note.TAB)) {
-                        paint.setColor(Color.BLACK);
-                        paint.setStyle(Paint.Style.FILL);
-                        //paint.setMaskFilter(null);
-                        canvas.drawLine((float) info[0], (float) info[1], (float) info[2], (float) info[3], paint);
-                        paint.setColor(color);
-                        canvas.drawCircle((float) (info[0]+info[2])/2, (float) (info[1]+info[3])/2, (float) info[4]/2, paint);
-                    }
-                    else {
-                        paint.setColor(color);
-                        paint.setStyle(Paint.Style.FILL);
-                        //paint.setMaskFilter(null);
-                        canvas.drawLine((float) info[0], (float) info[1], (float) info[2], (float) info[3], paint);
-                    }
-                }
-            }
-        }
-    }
-
-    private double[] getInfoForDraw(double bit1, double bit2, double pos1, double pos2, int quadrant) {
-        double[] it = new double[5];
-        double x = (bit1 - bit2) / bitInScreen;
-        double distance = bit1 > bit2 ? -1.0/3 * (x - 2) * (x - 2) + 4.0/3 :
-                0.1 * (chart.bitToNanos(bit1) - chart.bitToNanos(bit2)) / (JUDGE_TIME_BAD * 1000000);
-        double[] coefficient = Utility.getCoefficients(quadrant);
-        coefficient[1] *= height*(0.2+0.8*(1-distance))*13/27;
-        pos1 /= 10;
-        pos2 /= 10;
-        double y1 = coefficient[1] * pos1;
-        double x1 = coefficient[1]/coefficient[0] * (pos1-1);
-        double y2 = coefficient[1] * pos2;
-        double x2 = coefficient[1]/coefficient[0] * (pos2-1);
-        x1 += (double) width/2;
-        x2 += (double) width/2;
-        y1 += (double) height/2;
-        y2 += (double) height/2;
-        it[0] = x1;
-        it[1] = y1;
-        it[2] = x2;
-        it[3] = y2;
-        it[4] = ((double)height/27*Math.sqrt((double)256/337)*(0.2+0.8*(1-distance)));
-        return it;
-    }
+    }*/
 
     public void updateCurrentBit() {
         currentBit = chart.nanosToBit((long) (chart.bitToNanos(currentBit) + System.nanoTime() - time));
         time = System.nanoTime();
-    }
-
-    private void drawBG(Canvas canvas) {
-        canvas.drawBitmap(background, 0, 0, null);
-        canvas.drawBitmap(colorSide[0], 0, 0, null);
-        canvas.drawBitmap(colorSide[1], (float) width/2, 0, null);
-        canvas.drawBitmap(colorSide[2], (float) width/2, (float) height/2, null);
-        canvas.drawBitmap(colorSide[3], 0, (float) height/2, null);
-        canvas.drawBitmap(innerLine, (float) 2*width/5, (float) 2*height/5, null);
     }
 
     private void makeIntent(Intent intent) {

@@ -39,6 +39,18 @@ public abstract class Shape {
     protected float[][] worlds;
 
     /*Cam*/
+    public static float[] getCamPosition() {
+        return camPosition;
+    }
+
+    public static float[] getView() {
+        return view;
+    }
+
+    public static float[] getProj() {
+        return proj;
+    }
+
     private static float[] camPosition = new float[3];
     private static float[] view = new float[16];
     private static float[] proj = new float[16];
