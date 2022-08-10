@@ -5,9 +5,8 @@ public class Note extends BitObject {
     private double pos1;
     private double pos2;
     private int color; //Color color;
-    public final static String SLIDE = "Slide";
     public final static String TAB = "Tab";
-    public final static String AUTO = "Auto";
+    public final static String SLIDE = "Slide";
 
     public Note(String kind, double pos1, double bit, double pos2, int color) {
         super(bit);

@@ -966,7 +966,7 @@ public class PlayScreenLegacy extends AppCompatActivity implements SurfaceHolder
                     if (removed) continue;
                 }
                 if (chart.bitToNanos(currentBit) - chart.bitToNanos(note.getBit()) > -JUDGE_TIME_PERFECT //TODO: 나중에 수정
-                        && note.getKind().equals(Note.AUTO) && (note.getColor() == -1 || note.getColor() == screenColor[i])) {
+                        && note.getKind().equals(Note.SLIDE) && (note.getColor() == -1 || note.getColor() == screenColor[i])) {
                     if (chart.bitToNanos(currentBit) - chart.bitToNanos(note.getBit()) < JUDGE_TIME_PERFECT * 1000000 ) {
                         makeJudge(note, i, PERFECT);
                     } else if (chart.bitToNanos(currentBit) - chart.bitToNanos(note.getBit()) < JUDGE_TIME_GOOD * 1000000 ) {
@@ -978,7 +978,7 @@ public class PlayScreenLegacy extends AppCompatActivity implements SurfaceHolder
                     continue;
                 }
                 if (chart.bitToNanos(currentBit) - chart.bitToNanos(note.getBit()) > JUDGE_TIME_BAD * 1000000 ) {
-                    if (note.getKind().equals(Note.AUTO)) {
+                    if (note.getKind().equals(Note.SLIDE)) {
                         makeJudge(note, i, BAD);
                     } else makeJudge(note, i, MISS);
                     iterator.remove();
@@ -1115,7 +1115,7 @@ public class PlayScreenLegacy extends AppCompatActivity implements SurfaceHolder
         //draw note
         for (int i=0; i < SIDE_NUM; i++) {
             for (Note note : screenNotes[i]) {
-                if (note.getKind().equals(Note.AUTO)) {
+                if (note.getKind().equals(Note.SLIDE)) {
                     double[] info = getInfoForDraw(note.getBit(), currentBit, 0, 10, i);
                     int color = Utility.getNoteRGB(note.getColor());
                     info[4] *= Math.sqrt((double)337/256)/2;

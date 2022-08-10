@@ -87,25 +87,17 @@ public class PlayScreen extends AppCompatActivity implements GLSurfaceView.Rende
 
     int perfectCount, goodCount, badCount, combo;
     int maxCombo;
-    double[] startPointX, startPointY;
-    ArrayList<Double>[] slidePosSet;
-    LinkedList<Double>[] slideBuffer;
+    double[] baseAngle;
+    int dominantIndex; //TODO : Init in onCreate
     int score;
     int totalNotes;
     int[] screenColor = new int[SIDE_NUM];
     int[] correctColor = new int[SIDE_NUM];
-    public ArrayList<Integer> colorQueryList = new ArrayList<>();
     public ArrayList<EffectFlag> effectFlags = new ArrayList<>();
     boolean lockTouchEvent;
     boolean finishFlag;
-    boolean[] upLeftToRight, upRightToLeft, downLeftToRight, downRightToLeft;
-    boolean[] leftUpToDown, leftDownToUp, rightUpToDown, rightDownToUp;
-    boolean colorFixFlag;
-    char[] movePos;
 
-    Thread thread;
     Handler handler;
-    android.graphics.Canvas canvas;
     private long start;
     private long offset;
     private long pausedTime;
@@ -140,55 +132,27 @@ public class PlayScreen extends AppCompatActivity implements GLSurfaceView.Rende
     public boolean dispatchTouchEvent(MotionEvent ev) {
         if (lockTouchEvent) return super.dispatchTouchEvent(ev);
         if (gamePhase.getFlag() == GamePhase.START) return super.dispatchTouchEvent(ev);
+
+        float[] viewRay = screenPointToViewRay(ev.getX(ev.getActionIndex()), ev.getY(ev.getActionIndex()));
+        double radius = Math.abs(Vector.dotProduct(viewRay, new float[]{0.f, 0.f, 1.f}));
+        double angle = Math.acos(Vector.dotProduct(viewRay, new float[]{1.f, 0.f, 0.f}) / Vector.length(viewRay));
+        int pointerId = ev.getPointerId(ev.getActionIndex());
+
         if (ev.getActionMasked() == MotionEvent.ACTION_DOWN || ev.getActionMasked() == MotionEvent.ACTION_POINTER_DOWN) {
-            slideTouchDetect(ev);
-            tabTouch(ev.getX(ev.getActionIndex()), ev.getY(ev.getActionIndex()), ev.getPointerId(ev.getActionIndex()));
+            tabTouch(radius, angle, pointerId);
         } else if (ev.getActionMasked() == MotionEvent.ACTION_MOVE) {
-            slideTouchDetect(ev);
-            for (int i = 0; i < ev.getPointerCount(); i++) {
-                swipe(ev.getX(i), ev.getY(i), ev.getPointerId(i));
+            if (dominantIndex == -1) {
+                dominantIndex = pointerId;
+                rotateAngle = angle - baseAngle[pointerId];
             }
-        } else if (ev.getActionMasked() == MotionEvent.ACTION_POINTER_UP) {
-            slideTouchDetect(ev);
-        }
-        else if (ev.getActionMasked() == MotionEvent.ACTION_UP) {
-            for (int i = 0; i < SIDE_NUM; i++) slideBuffer[i].addAll(slidePosSet[i]);
+        } else if (ev.getActionMasked() == MotionEvent.ACTION_UP || ev.getActionMasked() == MotionEvent.ACTION_POINTER_UP) {
+            if (ev.getPointerId(ev.getActionIndex()) == dominantIndex) dominantIndex = -1;
+            //TODO : roll back angle
         }
         return super.dispatchTouchEvent(ev);
     }
 
-    private void clearSwipeFlag(int i) {
-        upLeftToRight[i] = upRightToLeft[i] = downLeftToRight[i] = downRightToLeft[i] = true;
-        leftUpToDown[i] = leftDownToUp[i] = rightUpToDown[i] = rightDownToUp[i] = true;
-    }
-
-    private void blockSwipeFlag(int i) {
-        upLeftToRight[i] = upRightToLeft[i] = downLeftToRight[i] = downRightToLeft[i] = false;
-        leftUpToDown[i] = leftDownToUp[i] = rightUpToDown[i] = rightDownToUp[i] = false;
-    }
-
-    private void slideTouchDetect(MotionEvent ev) {
-        for (int i = 0; i < SIDE_NUM; i++) slideBuffer[i].addAll(slidePosSet[i]);
-        for (int i = 0; i < ev.getPointerCount(); i++) {
-            if (i != ev.getActionIndex() || ev.getAction() != MotionEvent.ACTION_POINTER_UP) {
-                double posX = ev.getX(i) - frameLayoutPlay.getX();
-                double posY = ev.getY(i) - frameLayoutPlay.getY();
-                int touchedLine = 0;//inJudgeLine(posX, posY);
-                if (touchedLine >= 0) slidePosSet[touchedLine].add(rawPosToPos(posX, posY));
-            }
-        }
-    }
-
-    private double rawPosToPos(double posX, double posY) {
-        posX = Math.abs(posX - width/2.0f);
-        posY = Math.abs(posY - height/2.0f);
-        return 10 * posY / (posY + Utility.screenRate * posX);
-    }
-
-    private void tabTouch(float rawX, float rawY, int pointerID) {
-        float[] viewRay = screenPointToViewRay(rawX, rawY);
-        double radius = Math.abs(Vector.dotProduct(viewRay, new float[]{0.f, 0.f, 1.f}));
-        double angle = Math.acos(Vector.dotProduct(viewRay, new float[]{1.f, 0.f, 0.f}) / Vector.length(viewRay));
+    private void tabTouch(double radius, double angle, int pointerID) {
         int touchedLine = getTouchedLine(radius, angle);
 
         if (touchedLine >= 0 && !screenNotes[touchedLine].isEmpty()) {
@@ -200,238 +164,9 @@ public class PlayScreen extends AppCompatActivity implements GLSurfaceView.Rende
                         makeTabNoteJudge(note, touchedLine);
                     }
                 }
-                    /*else if (note.getKind().equals(Note.SLIDE)) {
-                        if (Math.abs(chart.bitToNanos(note.getBit()) - chart.bitToNanos(currentBit)) <= AWARE_TIME * 1000000) {
-
-                            if (chart.bitToNanos(currentBit) - chart.bitToNanos(note.getBit()) > JUDGE_TIME_BAD * 1000000) {
-                                combo = 0;
-                                effectFlags.add(new EffectFlag(EffectFlag.MISS, note.getPosition1(), touchedLine, note.getPosition2(), note.getBit(), currentBit));
-                                handler.post(() -> Utility.startCountAnimation(score, getScore(), scoreText, 100));
-                                comboText.setText(String.format(Locale.US, "%d", combo));
-                                score = getScore();
-                                if (maxCombo < combo) maxCombo = combo;
-                            } else if (chart.bitToNanos(currentBit) - chart.bitToNanos(note.getBit()) > JUDGE_TIME_GOOD * 1000000) {
-                                badCount++;
-                                combo = 0;
-                                effectFlags.add(new EffectFlag(EffectFlag.BAD, note.getPosition1(), touchedLine, note.getPosition2(), note.getBit(), currentBit));
-                                handler.post(() -> Utility.startCountAnimation(score, getScore(), scoreText, 100));
-                                comboText.setText(String.format(Locale.US, "%d", combo));
-                                score = getScore();
-                                if (maxCombo < combo) maxCombo = combo;
-                            } else if (chart.bitToNanos(currentBit) - chart.bitToNanos(note.getBit()) > JUDGE_TIME_PERFECT * 1000000) {
-
-                                Thread thread = new Thread(() -> {
-                                    long last = System.nanoTime();
-                                    long now = 0;
-                                    while (now - last < 2 * 1000000000.0 / FRAME_RATE) {
-                                        now = System.nanoTime();
-                                        if (screenColor[touchedLine] == note.getColor() || note.getColor() == -1) {
-                                            goodCount++;
-                                            combo++;
-                                            effectFlags.add(new EffectFlag(EffectFlag.GOOD, note.getPosition1(), touchedLine, note.getPosition2(), note.getBit(), currentBit));
-                                            handler.post(() -> Utility.startCountAnimation(score, getScore(), scoreText, 100));
-                                            handler.post(() -> comboText.setText(String.format(Locale.US, "%d", combo)));
-                                            score = getScore();
-                                            if (maxCombo < combo) maxCombo = combo;
-                                            return;
-                                        }
-                                        try {
-                                            Thread.sleep(1);
-                                        } catch (InterruptedException e) {
-                                            e.printStackTrace();
-                                        }
-                                    }
-                                    badCount++;
-                                    combo = 0;
-                                    effectFlags.add(new EffectFlag(EffectFlag.BAD, note.getPosition1(), touchedLine, note.getPosition2(), note.getBit(), currentBit));
-                                    handler.post(() -> Utility.startCountAnimation(score, getScore(), scoreText, 100));
-                                    handler.post(() -> comboText.setText(String.format(Locale.US, "%d", combo)));
-                                    score = getScore();
-                                    if (maxCombo < combo) maxCombo = combo;
-                                });
-                                thread.start();
-                            } else {
-                                Thread thread = new Thread(() -> {
-                                    long last = System.nanoTime();
-                                    long now = 0;
-                                    while (now - last < 1000000000.0 / FRAME_RATE) {
-                                        now = System.nanoTime();
-                                        if (screenColor[touchedLine] == note.getColor() || note.getColor() == -1) {
-                                            perfectCount++;
-                                            combo++;
-                                            effectFlags.add(new EffectFlag(EffectFlag.PERFECT, note.getPosition1(), touchedLine, note.getPosition2(), note.getBit(), currentBit));
-                                            handler.post(() -> Utility.startCountAnimation(score, getScore(), scoreText, 100));
-                                            handler.post(() -> comboText.setText(String.format(Locale.US, "%d", combo)));
-                                            score = getScore();
-                                            if (maxCombo < combo) maxCombo = combo;
-                                            return;
-                                        }
-                                        try {
-                                            Thread.sleep(1);
-                                        } catch (InterruptedException e) {
-                                            e.printStackTrace();
-                                        }
-                                    }
-                                    badCount++;
-                                    combo = 0;
-                                    effectFlags.add(new EffectFlag(EffectFlag.BAD, note.getPosition1(), touchedLine, note.getPosition2(), note.getBit(), currentBit));
-                                    handler.post(() -> Utility.startCountAnimation(score, getScore(), scoreText, 100));
-                                    handler.post(() -> comboText.setText(String.format(Locale.US, "%d", combo)));
-                                    score = getScore();
-                                    if (maxCombo < combo) maxCombo = combo;
-                                });
-                                thread.start();
-                            }
-                            screenNotes[touchedLine].remove(note);
-                        }
-                    }*/
             }
         }
-    }
-
-        /*if (touchedLine == -1) {
-            clearSwipeFlag(i);
-            movePos[i] = 'N';
-            startPointX[i] = posX;
-            startPointY[i] = posY;
-        }
-        else {
-            blockSwipeFlag(i);
-        }*/
-    /*
-        clearSwipeFlag(i);
-        movePos[i] = 'N';
-        startPointX[i] = posX;
-        startPointY[i] = posY;
-     */
-
-    private void swipe(double rawPosX, double rawPosY, int i) {
-        //if (inJudgeLine(startPointX[i], startPointY[i]) != -1) return;
-        double posX = rawPosX - frameLayoutPlay.getX();
-        double posY = rawPosY - frameLayoutPlay.getY();
-        double swipeDistanceX = (double) height/10;
-        double swipeDistanceY = (double) height/10;
-        int t = -1;
-        if (movePos[i] != 'N') {
-            switch (movePos[i]) {
-                case 'R' :
-                    if (posX > startPointX[i]) {
-                        startPointX[i] = posX;
-                        startPointY[i] = posY;
-                        return;
-                    }
-                    break;
-                case 'L' :
-                    if (posX < startPointX[i]) {
-                        startPointX[i] = posX;
-                        startPointY[i] = posY;
-                        return;
-                    }
-                    break;
-                case 'D' :
-                    if (posY > startPointY[i]) {
-                        startPointX[i] = posX;
-                        startPointY[i] = posY;
-                        return;
-                    }
-                    break;
-                case 'U' :
-                    if (posY < startPointY[i]) {
-                        startPointX[i] = posX;
-                        startPointY[i] = posY;
-                        return;
-                    }
-                    break;
-                default :
-                    System.out.println("\t\t\t!!!ERROR!!!");
-            }
-        }
-        if (posX - startPointX[i] > swipeDistanceX) {
-            movePos[i] = 'R';
-            if (upLeftToRight[i] && 0 <= startPointY[i] && startPointY[i] < height/2.0) {
-                t = 1;
-                startPointX[i] = posX;
-                startPointY[i] = posY;
-                blockSwipeFlag(i);
-                upRightToLeft[i] = true;
-                rightUpToDown[i] = true;
-            }
-            else if (downLeftToRight[i] && height/2.0 <= startPointY[i] && startPointY[i] < height) {
-                t = 3;
-                startPointX[i] = posX;
-                startPointY[i] = posY;
-                blockSwipeFlag(i);
-                downRightToLeft[i] = true;
-                rightDownToUp[i] = true;
-            }
-        }
-        else if (posX - startPointX[i] < -swipeDistanceX) {
-            movePos[i] = 'L';
-            if (upRightToLeft[i] && 0 <= startPointY[i] && startPointY[i] < height/2.0) {
-                t = 1;
-                startPointX[i] = posX;
-                startPointY[i] = posY;
-                blockSwipeFlag(i);
-                upLeftToRight[i] = true;
-                leftUpToDown[i] = true;
-            }
-            else if (downRightToLeft[i] && height/2.0 <= startPointY[i] && startPointY[i] < height) {
-                t = 3;
-                startPointX[i] = posX;
-                startPointY[i] = posY;
-                blockSwipeFlag(i);
-                downLeftToRight[i] = true;
-                leftDownToUp[i] = true;
-            }
-        }
-        else if (posY - startPointY[i] > swipeDistanceY) {
-            movePos[i] = 'D';
-            if (leftUpToDown[i] && 0 <= startPointX[i] && startPointX[i] < width/2.0) {
-                t = 0;
-                startPointX[i] = posX;
-                startPointY[i] = posY;
-                blockSwipeFlag(i);
-                leftDownToUp[i] = true;
-                downLeftToRight[i] = true;
-            }
-            else if (rightUpToDown[i] && width/2.0 <= startPointX[i] && startPointX[i] < width) {
-                t = 2;
-                startPointX[i] = posX;
-                startPointY[i] = posY;
-                blockSwipeFlag(i);
-                rightDownToUp[i] = true;
-                downRightToLeft[i] = true;
-            }
-        }
-        else if (posY - startPointY[i] < -swipeDistanceY) {
-            movePos[i] = 'U';
-            if (leftDownToUp[i] && 0 <= startPointX[i] && startPointX[i] < width/2.0) {
-                t = 0;
-                startPointX[i] = posX;
-                startPointY[i] = posY;
-                blockSwipeFlag(i);
-                leftUpToDown[i] = true;
-                upLeftToRight[i] = true;
-            }
-            else if (rightDownToUp[i] && width/2.0 <= startPointX[i] && startPointX[i] < width) {
-                t = 2;
-                startPointX[i] = posX;
-                startPointY[i] = posY;
-                blockSwipeFlag(i);
-                rightUpToDown[i] = true;
-                upRightToLeft[i] = true;
-            }
-        }
-        if (t != -1) {
-            colorQueryList.add(t);
-            System.out.println("\t\t\tmove: "+movePos[i]);
-        }
-    }
-
-    private void swap(int i, int j) {
-        int t = screenColor[i];
-        screenColor[i] = screenColor[j];
-        screenColor[j] = t;
+        baseAngle[pointerID] = angle;
     }
 
     private int getScore() {
@@ -531,9 +266,6 @@ public class PlayScreen extends AppCompatActivity implements GLSurfaceView.Rende
         setContentView(R.layout.playscreen);
 
         finishFlag = false;
-        colorFixFlag = false;
-        slidePosSet = new ArrayList[SIDE_NUM];
-        for (int i = 0; i < SIDE_NUM; i++) slidePosSet[i] = new ArrayList<>();
         Intent intent = getIntent();
         songName = intent.getStringExtra("name");
         difficulty = intent.getStringExtra("difficulty");
@@ -630,24 +362,11 @@ public class PlayScreen extends AppCompatActivity implements GLSurfaceView.Rende
         screenLines = new ArrayList<>();
         screenNotes = new ArrayList[SIDE_NUM];
         deleteQueue = new LinkedList[SIDE_NUM];
-        slideBuffer = new LinkedList[SIDE_NUM];
         for (int i=0; i < SIDE_NUM; i++) {
             screenNotes[i] = new ArrayList<>();
             deleteQueue[i] = new LinkedList<>();
-            slideBuffer[i] = new LinkedList<>();
         }
-        startPointX = new double[10];
-        startPointY = new double[10];
-        upLeftToRight = new boolean[10];
-        upRightToLeft = new boolean[10];
-        downLeftToRight = new boolean[10];
-        downRightToLeft = new boolean[10];
-        leftUpToDown = new boolean[10];
-        leftDownToUp = new boolean[10];
-        rightUpToDown = new boolean[10];
-        rightDownToUp = new boolean[10];
-        movePos = new char[10];
-        for (int i = 0; i < 10; i++) blockSwipeFlag(i);
+        baseAngle = new double[10];
         for (int i = 0; i < SIDE_NUM; i++) {
             screenColor[i] = i;
             correctColor[i] = i;
@@ -911,7 +630,6 @@ public class PlayScreen extends AppCompatActivity implements GLSurfaceView.Rende
                 combo = 0;
                 handler.post(() -> comboText.setText(String.format(Locale.US, "%d",combo)));
                 effectQueue.add(new EffectFlag(EffectFlag.MISS, note.getPosition1(), i, note.getPosition2(), note.getBit(), currentBit));
-                if (note.getColor() != -1) colorFixFlag = true;
                 break;
 
             case BAD :
@@ -921,7 +639,6 @@ public class PlayScreen extends AppCompatActivity implements GLSurfaceView.Rende
                 handler.post(() -> comboText.setText(String.format(Locale.US, "%d",combo)));
                 score = getScore();
                 effectQueue.add(new EffectFlag(EffectFlag.BAD, note.getPosition1(), i, note.getPosition2(), note.getBit(), currentBit));
-                if (note.getColor() != -1) colorFixFlag = true;
                 break;
 
             case GOOD :
@@ -994,7 +711,6 @@ public class PlayScreen extends AppCompatActivity implements GLSurfaceView.Rende
         GLES30.glClear(GLES30.GL_DEPTH_BUFFER_BIT);
 
         /*TODO : Cull And Render Note*/
-        //noteShape.draw(3, new int[]{0, 0, 1}, new double[]{0.0, 0.0, 4.0}, new double[]{10.0, 10.0, 10.0}, new double[]{0.0, 5.0, t});
         cull();
         laneShape.draw();
         blankingShape.draw();
@@ -1011,14 +727,6 @@ public class PlayScreen extends AppCompatActivity implements GLSurfaceView.Rende
             for (int j = 0; j < count; j++) {
                 screenNotes[i].remove(deleteQueue[i].getFirst());
                 deleteQueue[i].removeFirst();
-            }
-        }
-
-        for (int i = 0; i < SIDE_NUM; i++) {
-            count = slideBuffer[i].size();
-            for (int j = 0; j < count; j++) {
-                slidePosSet[i].remove(slideBuffer[i].getFirst());
-                slideBuffer[i].removeFirst();
             }
         }
 
@@ -1047,35 +755,8 @@ public class PlayScreen extends AppCompatActivity implements GLSurfaceView.Rende
             for (Iterator<Note> iterator = screenNotes[i].iterator(); iterator.hasNext();) {
                 boolean removed = false;
                 Note note = iterator.next();
-                if (chart.bitToNanos(note.getBit()) - chart.bitToNanos(currentBit) < JUDGE_TIME_PERFECT * 1000000
-                        && note.getKind().equals(Note.SLIDE)) { //슬라판정 레이트인 경우 고려하기.
-                    for (Double pos : slidePosSet[i]) {
-                        if (note.getPosition1() - 0.5 < pos && pos < note.getPosition2() + 0.5) {
-                            if (chart.bitToNanos(currentBit) - chart.bitToNanos(note.getBit()) > JUDGE_TIME_GOOD * 1000000) {
-                                makeJudgeEffect(note, i, BAD);
-                                iterator.remove();
-                                removed = true;
-                                break;
-                            }
-                            else if ((note.getColor() == -1 || note.getColor() == screenColor[i])
-                                    && chart.bitToNanos(currentBit) - chart.bitToNanos(note.getBit()) > JUDGE_TIME_PERFECT * 1000000) {
-                                makeJudgeEffect(note, i, GOOD);
-                                iterator.remove();
-                                removed = true;
-                                break;
-                            }
-                            else if (note.getColor() == -1 || note.getColor() == screenColor[i]) {
-                                makeJudgeEffect(note, i, PERFECT);
-                                iterator.remove();
-                                removed = true;
-                                break;
-                            }
-                        }
-                    }
-                    if (removed) continue;
-                }
                 if (chart.bitToNanos(currentBit) - chart.bitToNanos(note.getBit()) > -JUDGE_TIME_PERFECT //TODO: 나중에 수정
-                        && note.getKind().equals(Note.AUTO) && (note.getColor() == -1 || note.getColor() == screenColor[i])) {
+                        && note.getKind().equals(Note.SLIDE) && (note.getColor() == -1 || note.getColor() == screenColor[i])) {
                     if (chart.bitToNanos(currentBit) - chart.bitToNanos(note.getBit()) < JUDGE_TIME_PERFECT * 1000000 ) {
                         makeJudgeEffect(note, i, PERFECT);
                     } else if (chart.bitToNanos(currentBit) - chart.bitToNanos(note.getBit()) < JUDGE_TIME_GOOD * 1000000 ) {
@@ -1087,7 +768,7 @@ public class PlayScreen extends AppCompatActivity implements GLSurfaceView.Rende
                     continue;
                 }
                 if (chart.bitToNanos(currentBit) - chart.bitToNanos(note.getBit()) > JUDGE_TIME_BAD * 1000000 ) {
-                    if (note.getKind().equals(Note.AUTO)) {
+                    if (note.getKind().equals(Note.SLIDE)) {
                         makeJudgeEffect(note, i, BAD);
                     } else makeJudgeEffect(note, i, MISS);
                     iterator.remove();
