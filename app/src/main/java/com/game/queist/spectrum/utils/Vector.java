@@ -20,8 +20,4 @@ public class Vector {
    public static double length(float[] vector) {
       return Math.sqrt(dotProduct(vector, vector));
    }
-
-   public static double angle2D(float[] vector) {
-      return Math.acos(dotProduct(vector, new float[]{0.f, 1.f, 0.f}) / length(vector));
-   }
 }

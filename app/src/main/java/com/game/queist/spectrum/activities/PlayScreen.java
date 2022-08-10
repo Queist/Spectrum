@@ -5,10 +5,7 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.Color;
-import android.graphics.Paint;
-import android.graphics.Path;
 import android.graphics.Point;
-import android.graphics.Typeface;
 import android.media.MediaPlayer;
 import android.opengl.GLES30;
 import android.opengl.GLSurfaceView;
@@ -19,7 +16,6 @@ import android.os.Bundle;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityOptionsCompat;
-import androidx.core.content.res.ResourcesCompat;
 
 import android.os.Handler;
 import android.view.MotionEvent;
@@ -44,6 +40,7 @@ import com.game.queist.spectrum.shape.Shape;
 import com.game.queist.spectrum.utils.DataManager;
 import com.game.queist.spectrum.utils.GamePhase;
 import com.game.queist.spectrum.utils.Utility;
+import com.game.queist.spectrum.utils.Vector;
 
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -119,12 +116,12 @@ public class PlayScreen extends AppCompatActivity implements GLSurfaceView.Rende
     private double bitInScreen;
     private double rotateAngle;
 
-    ArrayList<Note>[] queryNotes;
+    ArrayList<Note>[] queriedNotes;
     ArrayList<Note>[] screenNotes;
-    LinkedList<Note>[] noteBuffer;
-    ArrayList<Double> queryLines;
+    LinkedList<Note>[] deleteQueue;
+    ArrayList<Double> queriedLines;
     ArrayList<Double> screenLines;
-    LinkedList<EffectFlag> effectBuffer;
+    LinkedList<EffectFlag> effectQueue;
     Bitmap background;
     Bitmap innerLine;
     Bitmap[] colorSide = new Bitmap[SIDE_NUM];
@@ -176,7 +173,7 @@ public class PlayScreen extends AppCompatActivity implements GLSurfaceView.Rende
             if (i != ev.getActionIndex() || ev.getAction() != MotionEvent.ACTION_POINTER_UP) {
                 double posX = ev.getX(i) - frameLayoutPlay.getX();
                 double posY = ev.getY(i) - frameLayoutPlay.getY();
-                int touchedLine = inJudgeLine(posX, posY);
+                int touchedLine = 0;//inJudgeLine(posX, posY);
                 if (touchedLine >= 0) slidePosSet[touchedLine].add(rawPosToPos(posX, posY));
             }
         }
@@ -188,64 +185,21 @@ public class PlayScreen extends AppCompatActivity implements GLSurfaceView.Rende
         return 10 * posY / (posY + Utility.screenRate * posX);
     }
 
-    private void tabTouch(double rawPosX, double rawPosY, int i) {
-        double posX = rawPosX - frameLayoutPlay.getX();
-        double posY = rawPosY - frameLayoutPlay.getY();
-        int touchedLine = inJudgeLine(posX, posY);
-        if (touchedLine >= 0 && !screenNotes[touchedLine].isEmpty()) {
-            ArrayList<Note> notes = Utility.getNextNotes(screenNotes[touchedLine]);
-            updateCurrentBit();
-            for (Note note : notes) {
-                if (isCorrectPosition(note.getPosition1(), note.getPosition2(), posX, posY, touchedLine)) {
-                    if (note.getKind().equals(Note.TAB)) {
-                        if (Math.abs(chart.bitToNanos(note.getBit()) - chart.bitToNanos(currentBit)) <= AWARE_TIME * 1000000) {
+    private void tabTouch(float rawX, float rawY, int pointerID) {
+        float[] viewRay = screenPointToViewRay(rawX, rawY);
+        double radius = Math.abs(Vector.dotProduct(viewRay, new float[]{0.f, 0.f, 1.f}));
+        double angle = Math.acos(Vector.dotProduct(viewRay, new float[]{1.f, 0.f, 0.f}) / Vector.length(viewRay));
+        int touchedLine = getTouchedLine(radius, angle);
 
-                            if (Math.abs(chart.bitToNanos(note.getBit()) - chart.bitToNanos(currentBit)) > JUDGE_TIME_BAD * 1000000) {
-                                makeJudge(note, touchedLine, MISS);
-                            } else if (Math.abs(chart.bitToNanos(note.getBit()) - chart.bitToNanos(currentBit)) > JUDGE_TIME_GOOD * 1000000) {
-                                makeJudge(note, touchedLine, BAD);
-                            } else if (Math.abs(chart.bitToNanos(note.getBit()) - chart.bitToNanos(currentBit)) > JUDGE_TIME_PERFECT * 1000000) {
-                                Thread thread = new Thread(() -> {
-                                    long last = System.nanoTime();
-                                    long now = 0;
-                                    while (now - last < 1000000000.0 / FRAME_RATE) {
-                                        now = System.nanoTime();
-                                        if (screenColor[touchedLine] == note.getColor() || note.getColor() == -1) {
-                                            makeJudge(note, touchedLine, GOOD);
-                                            return;
-                                        }
-                                        try {
-                                            Thread.sleep(1);
-                                        } catch (InterruptedException e) {
-                                            e.printStackTrace();
-                                        }
-                                    }
-                                    makeJudge(note, touchedLine, BAD);
-                                });
-                                thread.start();
-                            } else {
-                                Thread thread = new Thread(() -> {
-                                    long last = System.nanoTime();
-                                    long now = 0;
-                                    while (now - last < 1000000000.0 / FRAME_RATE) {
-                                        now = System.nanoTime();
-                                        if (screenColor[touchedLine] == note.getColor() || note.getColor() == -1) {
-                                            makeJudge(note, touchedLine, PERFECT);
-                                            return;
-                                        }
-                                        try {
-                                            Thread.sleep(1);
-                                        } catch (InterruptedException e) {
-                                            e.printStackTrace();
-                                        }
-                                    }
-                                    makeJudge(note, touchedLine, BAD);
-                                });
-                                thread.start();
-                            }
-                            noteBuffer[touchedLine].addLast(note);
-                        }
+        if (touchedLine >= 0 && !screenNotes[touchedLine].isEmpty()) {
+            updateCurrentBit();
+            ArrayList<Note> notes = Utility.getNextNotes(screenNotes[touchedLine]);
+            for (Note note : notes) {
+                if (touchedCorrectly(note, angle, touchedLine)) {
+                    if (note.getKind().equals(Note.TAB)) {
+                        makeTabNoteJudge(note, touchedLine);
                     }
+                }
                     /*else if (note.getKind().equals(Note.SLIDE)) {
                         if (Math.abs(chart.bitToNanos(note.getBit()) - chart.bitToNanos(currentBit)) <= AWARE_TIME * 1000000) {
 
@@ -331,9 +285,9 @@ public class PlayScreen extends AppCompatActivity implements GLSurfaceView.Rende
                             screenNotes[touchedLine].remove(note);
                         }
                     }*/
-                }
             }
         }
+    }
 
         /*if (touchedLine == -1) {
             clearSwipeFlag(i);
@@ -344,14 +298,15 @@ public class PlayScreen extends AppCompatActivity implements GLSurfaceView.Rende
         else {
             blockSwipeFlag(i);
         }*/
+    /*
         clearSwipeFlag(i);
         movePos[i] = 'N';
         startPointX[i] = posX;
         startPointY[i] = posY;
-    }
+     */
 
     private void swipe(double rawPosX, double rawPosY, int i) {
-        if (inJudgeLine(startPointX[i], startPointY[i]) != -1) return;
+        //if (inJudgeLine(startPointX[i], startPointY[i]) != -1) return;
         double posX = rawPosX - frameLayoutPlay.getX();
         double posY = rawPosY - frameLayoutPlay.getY();
         double swipeDistanceX = (double) height/10;
@@ -484,30 +439,25 @@ public class PlayScreen extends AppCompatActivity implements GLSurfaceView.Rende
         return (int) x;
     }
 
-    private int inJudgeLine(double x, double y) {
-        double eq = Math.abs(x - (double) width/2) / width + Math.abs(y - (double) height/2) / height;
-        System.out.println("\t\t\teq:"+eq);
-        if (7.0/16.0 < eq) {
-            if (0 <= x && x < (double) width/2 && 0 <= y && y < (double) height/2) return 0;
-            else if ((double) width/2 <= x && x < width && 0 <= y && y < (double) height/2) return 1;
-            else if ((double) width/2 <= x && x < width && (double) height/2 <= y && y < height) return 2;
-            else return 3;
+    private int getTouchedLine(double radius, double angle) {
+        if (5 < radius && radius < 15) { //TODO
+            return (int) Math.floor(angle / (Math.PI / 2));
         }
-        else if (eq <= 7.0/16.0) return -1;
-        else return -2;
+        else return -1;
     }
 
-    private boolean isCorrectPosition(double pos1, double pos2, double x, double y, int line) {
-        double[] coefficient;
-        pos1 -= 0.5;
-        pos2 += 0.5;
-        coefficient = Utility.getCoefficients(line);
-        coefficient[1] = (y - (double) height/2) - coefficient[0] * (x - (double) width/2);
-        double y1 = coefficient[1] * pos1/10 + (double) height/2;
-        double x1 = coefficient[1]/coefficient[0] * (pos1/10-1) + (double) width/2;
-        double y2 = coefficient[1] * pos2/10 + (double) height/2;
-        double x2 = coefficient[1]/coefficient[0] * (pos2/10-1) + (double) width/2;
-        return  ((x-x1) * (x - x2) < 0 && (y - y1) * (y - y2) < 0);
+    private boolean touchedCorrectly(Note note, double angle, int line) {
+        double start = note.getPosition1();
+        double end = note.getPosition2();
+        if (start > end) {
+            double t = start;
+            start = end;
+            end = t;
+        }
+
+        double min = line % 2 == 0 ? ((10 - end) / 10 + line) * (Math.PI / 2) : (start / 10 + line) * (Math.PI / 2);
+        double range = (end - start) / 10 * (Math.PI / 2);
+        return  min <= angle && angle <= min + range;
     }
 
     private float[] screenPointToViewRay(float ex, float ey) {
@@ -521,6 +471,56 @@ public class PlayScreen extends AppCompatActivity implements GLSurfaceView.Rende
 
         return result;
     }
+
+    private void makeTabNoteJudge(Note note, int touchedLine) {
+        if (Math.abs(chart.bitToNanos(note.getBit()) - chart.bitToNanos(currentBit)) <= AWARE_TIME * 1000000) {
+            if (Math.abs(chart.bitToNanos(note.getBit()) - chart.bitToNanos(currentBit)) > JUDGE_TIME_BAD * 1000000) {
+                makeJudgeEffect(note, touchedLine, MISS);
+            } else if (Math.abs(chart.bitToNanos(note.getBit()) - chart.bitToNanos(currentBit)) > JUDGE_TIME_GOOD * 1000000) {
+                makeJudgeEffect(note, touchedLine, BAD);
+            } else if (Math.abs(chart.bitToNanos(note.getBit()) - chart.bitToNanos(currentBit)) > JUDGE_TIME_PERFECT * 1000000) {
+                Thread thread = new Thread(() -> {
+                    long last = System.nanoTime();
+                    long now = 0;
+                    while (now - last < 1000000000.0 / FRAME_RATE) {
+                        now = System.nanoTime();
+                        if (screenColor[touchedLine] == note.getColor() || note.getColor() == -1) {
+                            makeJudgeEffect(note, touchedLine, GOOD);
+                            return;
+                        }
+                        try {
+                            Thread.sleep(1);
+                        } catch (InterruptedException e) {
+                            e.printStackTrace();
+                        }
+                    }
+                    makeJudgeEffect(note, touchedLine, BAD);
+                });
+                thread.start();
+            } else {
+                Thread thread = new Thread(() -> {
+                    long last = System.nanoTime();
+                    long now = 0;
+                    while (now - last < 1000000000.0 / FRAME_RATE) {
+                        now = System.nanoTime();
+                        if (screenColor[touchedLine] == note.getColor() || note.getColor() == -1) {
+                            makeJudgeEffect(note, touchedLine, PERFECT);
+                            return;
+                        }
+                        try {
+                            Thread.sleep(1);
+                        } catch (InterruptedException e) {
+                            e.printStackTrace();
+                        }
+                    }
+                    makeJudgeEffect(note, touchedLine, BAD);
+                });
+                thread.start();
+            }
+            deleteQueue[touchedLine].addLast(note);
+        }
+    }
+
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -574,7 +574,7 @@ public class PlayScreen extends AppCompatActivity implements GLSurfaceView.Rende
         gamePhase = new GamePhase();
         prevGamePhase = new GamePhase();
         handler = new Handler();
-        effectBuffer = new LinkedList<>();
+        effectQueue = new LinkedList<>();
         lockTouchEvent = false;
 
         surfaceView = findViewById(R.id.surfaceView);
@@ -621,16 +621,16 @@ public class PlayScreen extends AppCompatActivity implements GLSurfaceView.Rende
         surfaceView.setRenderMode(GLSurfaceView.RENDERMODE_CONTINUOUSLY);
         surfaceView.setDebugFlags(GLSurfaceView.DEBUG_CHECK_GL_ERROR | GLSurfaceView.DEBUG_LOG_GL_CALLS);
 
-        queryNotes = chart.getNotes();
-        queryLines = chart.getEquivalenceLines();
+        queriedNotes = chart.getNotes();
+        queriedLines = chart.getEquivalenceLines();
         totalNotes = chart.getTotalNotes();
         screenLines = new ArrayList<>();
         screenNotes = new ArrayList[SIDE_NUM];
-        noteBuffer = new LinkedList[SIDE_NUM];
+        deleteQueue = new LinkedList[SIDE_NUM];
         slideBuffer = new LinkedList[SIDE_NUM];
         for (int i=0; i < SIDE_NUM; i++) {
             screenNotes[i] = new ArrayList<>();
-            noteBuffer[i] = new LinkedList<>();
+            deleteQueue[i] = new LinkedList<>();
             slideBuffer[i] = new LinkedList<>();
         }
         startPointX = new double[10];
@@ -888,7 +888,7 @@ public class PlayScreen extends AppCompatActivity implements GLSurfaceView.Rende
     /**
      * @param i : side
      */
-    private void makeJudge(Note note, int i, String judge) {
+    private void makeJudgeEffect(Note note, int i, String judge) {
 
         if (note.getColor() != -1 && note.getColor() != correctColor[i]) {
             if (note.getColor() == correctColor[(i+3)%4]) {
@@ -907,7 +907,7 @@ public class PlayScreen extends AppCompatActivity implements GLSurfaceView.Rende
             case MISS :
                 combo = 0;
                 handler.post(() -> comboText.setText(String.format(Locale.US, "%d",combo)));
-                effectBuffer.add(new EffectFlag(EffectFlag.MISS, note.getPosition1(), i, note.getPosition2(), note.getBit(), currentBit));
+                effectQueue.add(new EffectFlag(EffectFlag.MISS, note.getPosition1(), i, note.getPosition2(), note.getBit(), currentBit));
                 if (note.getColor() != -1) colorFixFlag = true;
                 break;
 
@@ -917,7 +917,7 @@ public class PlayScreen extends AppCompatActivity implements GLSurfaceView.Rende
                 handler.post(() -> Utility.startCountAnimation(score, getScore(), scoreText, 100));
                 handler.post(() -> comboText.setText(String.format(Locale.US, "%d",combo)));
                 score = getScore();
-                effectBuffer.add(new EffectFlag(EffectFlag.BAD, note.getPosition1(), i, note.getPosition2(), note.getBit(), currentBit));
+                effectQueue.add(new EffectFlag(EffectFlag.BAD, note.getPosition1(), i, note.getPosition2(), note.getBit(), currentBit));
                 if (note.getColor() != -1) colorFixFlag = true;
                 break;
 
@@ -928,7 +928,7 @@ public class PlayScreen extends AppCompatActivity implements GLSurfaceView.Rende
                 handler.post(() -> comboText.setText(String.format(Locale.US, "%d",combo)));
                 score = getScore();
                 if (maxCombo < combo) maxCombo = combo;
-                effectBuffer.add(new EffectFlag(EffectFlag.GOOD, note.getPosition1(), i, note.getPosition2(), note.getBit(), currentBit));
+                effectQueue.add(new EffectFlag(EffectFlag.GOOD, note.getPosition1(), i, note.getPosition2(), note.getBit(), currentBit));
                 break;
 
             case PERFECT :
@@ -938,7 +938,7 @@ public class PlayScreen extends AppCompatActivity implements GLSurfaceView.Rende
                 handler.post(() -> comboText.setText(String.format(Locale.US, "%d",combo)));
                 score = getScore();
                 if (maxCombo < combo) maxCombo = combo;
-                effectBuffer.add(new EffectFlag(EffectFlag.PERFECT, note.getPosition1(), i, note.getPosition2(), note.getBit(), currentBit));
+                effectQueue.add(new EffectFlag(EffectFlag.PERFECT, note.getPosition1(), i, note.getPosition2(), note.getBit(), currentBit));
                 break;
 
             default :
@@ -1004,10 +1004,10 @@ public class PlayScreen extends AppCompatActivity implements GLSurfaceView.Rende
         int count;
 
         for (int i = 0; i < SIDE_NUM; i++) {
-            count = noteBuffer[i].size();
+            count = deleteQueue[i].size();
             for (int j = 0; j < count; j++) {
-                screenNotes[i].remove(noteBuffer[i].getFirst());
-                noteBuffer[i].removeFirst();
+                screenNotes[i].remove(deleteQueue[i].getFirst());
+                deleteQueue[i].removeFirst();
             }
         }
 
@@ -1019,7 +1019,7 @@ public class PlayScreen extends AppCompatActivity implements GLSurfaceView.Rende
             }
         }
 
-        for (Iterator<Double> iterator = queryLines.iterator(); iterator.hasNext();) {
+        for (Iterator<Double> iterator = queriedLines.iterator(); iterator.hasNext();) {
             double bit = iterator.next();
             if (bit - bitInScreen < currentBit ) {
                 screenLines.add(bit);
@@ -1032,7 +1032,7 @@ public class PlayScreen extends AppCompatActivity implements GLSurfaceView.Rende
 
         for (int i=0; i < SIDE_NUM; i++) {
 
-            for (Iterator<Note> iterator = queryNotes[i].iterator(); iterator.hasNext();) {
+            for (Iterator<Note> iterator = queriedNotes[i].iterator(); iterator.hasNext();) {
                 Note note = iterator.next();
                 if (note.getBit() - bitInScreen < currentBit ) {
                     screenNotes[i].add(note);
@@ -1049,20 +1049,20 @@ public class PlayScreen extends AppCompatActivity implements GLSurfaceView.Rende
                     for (Double pos : slidePosSet[i]) {
                         if (note.getPosition1() - 0.5 < pos && pos < note.getPosition2() + 0.5) {
                             if (chart.bitToNanos(currentBit) - chart.bitToNanos(note.getBit()) > JUDGE_TIME_GOOD * 1000000) {
-                                makeJudge(note, i, BAD);
+                                makeJudgeEffect(note, i, BAD);
                                 iterator.remove();
                                 removed = true;
                                 break;
                             }
                             else if ((note.getColor() == -1 || note.getColor() == screenColor[i])
                                     && chart.bitToNanos(currentBit) - chart.bitToNanos(note.getBit()) > JUDGE_TIME_PERFECT * 1000000) {
-                                makeJudge(note, i, GOOD);
+                                makeJudgeEffect(note, i, GOOD);
                                 iterator.remove();
                                 removed = true;
                                 break;
                             }
                             else if (note.getColor() == -1 || note.getColor() == screenColor[i]) {
-                                makeJudge(note, i, PERFECT);
+                                makeJudgeEffect(note, i, PERFECT);
                                 iterator.remove();
                                 removed = true;
                                 break;
@@ -1074,29 +1074,29 @@ public class PlayScreen extends AppCompatActivity implements GLSurfaceView.Rende
                 if (chart.bitToNanos(currentBit) - chart.bitToNanos(note.getBit()) > -JUDGE_TIME_PERFECT //TODO: 나중에 수정
                         && note.getKind().equals(Note.AUTO) && (note.getColor() == -1 || note.getColor() == screenColor[i])) {
                     if (chart.bitToNanos(currentBit) - chart.bitToNanos(note.getBit()) < JUDGE_TIME_PERFECT * 1000000 ) {
-                        makeJudge(note, i, PERFECT);
+                        makeJudgeEffect(note, i, PERFECT);
                     } else if (chart.bitToNanos(currentBit) - chart.bitToNanos(note.getBit()) < JUDGE_TIME_GOOD * 1000000 ) {
-                        makeJudge(note, i, GOOD);
+                        makeJudgeEffect(note, i, GOOD);
                     } else {
-                        makeJudge(note, i, BAD);
+                        makeJudgeEffect(note, i, BAD);
                     }
                     iterator.remove();
                     continue;
                 }
                 if (chart.bitToNanos(currentBit) - chart.bitToNanos(note.getBit()) > JUDGE_TIME_BAD * 1000000 ) {
                     if (note.getKind().equals(Note.AUTO)) {
-                        makeJudge(note, i, BAD);
-                    } else makeJudge(note, i, MISS);
+                        makeJudgeEffect(note, i, BAD);
+                    } else makeJudgeEffect(note, i, MISS);
                     iterator.remove();
                     continue;
                 }
             }
         }
 
-        count = effectBuffer.size();
+        count = effectQueue.size();
         for (int i = 0; i < count; i++) {
-            effectFlags.add(effectBuffer.getFirst());
-            effectBuffer.removeFirst();
+            effectFlags.add(effectQueue.getFirst());
+            effectQueue.removeFirst();
         }
     }
 

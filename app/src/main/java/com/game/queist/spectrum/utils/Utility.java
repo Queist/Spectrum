@@ -94,7 +94,7 @@ public class Utility {
         return Color.argb(128, 128, 128, 128);
     }
 
-    public static ArrayList<Note> getNextNotes (ArrayList<Note> notes) {
+    public static ArrayList<Note> getNextNotes(ArrayList<Note> notes) {
         ArrayList<Note> temp = new ArrayList<>();
         for (int i = 0; i < notes.size(); i++) {
             Note note = notes.get(i);
