@@ -46,6 +46,7 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.Locale;
+import java.util.concurrent.TimeUnit;
 
 import javax.microedition.khronos.egl.EGLConfig;
 import javax.microedition.khronos.opengles.GL10;
@@ -87,8 +88,6 @@ public class PlayScreen extends AppCompatActivity implements GLSurfaceView.Rende
 
     int perfectCount, goodCount, badCount, combo;
     int maxCombo;
-    double[] baseAngle;
-    int dominantIndex; //TODO : Init in onCreate
     int score;
     int totalNotes;
     int[] screenColor = new int[SIDE_NUM];
@@ -106,7 +105,12 @@ public class PlayScreen extends AppCompatActivity implements GLSurfaceView.Rende
     private long dt;
     private double currentBit;
     private double bitInScreen;
+
     private double rotateAngle;
+    double[] baseAngle;
+    int dominantIndex; //TODO : Init in onCreate
+    private boolean isRollBack;
+    private double rollBackTime;
 
     ArrayList<Note>[] queriedNotes;
     ArrayList<Note>[] screenNotes;
@@ -131,23 +135,38 @@ public class PlayScreen extends AppCompatActivity implements GLSurfaceView.Rende
     @Override
     public boolean dispatchTouchEvent(MotionEvent ev) {
         if (lockTouchEvent) return super.dispatchTouchEvent(ev);
-        if (gamePhase.getFlag() == GamePhase.START) return super.dispatchTouchEvent(ev);
+        //if (gamePhase.getFlag() == GamePhase.START) return super.dispatchTouchEvent(ev);
+
+        updateFrame();
 
         float[] viewRay = screenPointToViewRay(ev.getX(ev.getActionIndex()), ev.getY(ev.getActionIndex()));
+        viewRay[2] = 0.f; //project to xy-plane
         double radius = Math.abs(Vector.dotProduct(viewRay, new float[]{0.f, 0.f, 1.f}));
-        double angle = Math.acos(Vector.dotProduct(viewRay, new float[]{1.f, 0.f, 0.f}) / Vector.length(viewRay));
+        double angle = Math.acos(Vector.dotProduct(viewRay, new float[]{1.f, 0.f, 0.f}) / Vector.length(viewRay)); //right-hand
+        if (viewRay[1] > 0) angle = 2 * Math.PI - angle; //right-hand
         int pointerId = ev.getPointerId(ev.getActionIndex());
+
+        System.out.println(Math.toDegrees(angle));
 
         if (ev.getActionMasked() == MotionEvent.ACTION_DOWN || ev.getActionMasked() == MotionEvent.ACTION_POINTER_DOWN) {
             tabTouch(radius, angle, pointerId);
         } else if (ev.getActionMasked() == MotionEvent.ACTION_MOVE) {
-            if (dominantIndex == -1) {
+            if (dominantIndex == -1 || dominantIndex == pointerId && !isRollBack) {
                 dominantIndex = pointerId;
-                rotateAngle = angle - baseAngle[pointerId];
+                double ccw = angle - baseAngle[pointerId];
+                double cw = ccw > 0 ? ccw - 2 * Math.PI : ccw + 2 * Math.PI;
+                rotateAngle += Math.abs(ccw) <= Math.abs(cw) ? ccw : cw;
+                baseAngle[pointerId] = angle;
+                System.out.println(Math.toDegrees(ccw));
+                System.out.println(Math.toDegrees(cw));
+                System.out.println(Math.toDegrees(rotateAngle));
             }
         } else if (ev.getActionMasked() == MotionEvent.ACTION_UP || ev.getActionMasked() == MotionEvent.ACTION_POINTER_UP) {
-            if (ev.getPointerId(ev.getActionIndex()) == dominantIndex) dominantIndex = -1;
-            //TODO : roll back angle
+            if (ev.getPointerId(ev.getActionIndex()) == dominantIndex) {
+                dominantIndex = -1;
+                isRollBack = true;
+                rollBackTime = 0.5; //TODO : rollBackTime = min(nearestNoteTime, currentChartRollBackTimer);
+            }
         }
         return super.dispatchTouchEvent(ev);
     }
@@ -156,7 +175,6 @@ public class PlayScreen extends AppCompatActivity implements GLSurfaceView.Rende
         int touchedLine = getTouchedLine(radius, angle);
 
         if (touchedLine >= 0 && !screenNotes[touchedLine].isEmpty()) {
-            updateCurrentBit();
             ArrayList<Note> notes = Utility.getNextNotes(screenNotes[touchedLine]);
             for (Note note : notes) {
                 if (touchedCorrectly(note, angle, touchedLine)) {
@@ -181,7 +199,7 @@ public class PlayScreen extends AppCompatActivity implements GLSurfaceView.Rende
         else return -1;
     }
 
-    private boolean touchedCorrectly(Note note, double angle, int line) {
+    private double getCurrentNoteAngleStart(Note note, int line) {
         double start = note.getPosition1();
         double end = note.getPosition2();
         if (start > end) {
@@ -194,8 +212,35 @@ public class PlayScreen extends AppCompatActivity implements GLSurfaceView.Rende
         min += rotateAngle;
         double n = Math.ceil(-min / (2 * Math.PI));
         min += 2 * Math.PI * n;
-        double range = (end - start) / 10 * (Math.PI / 2);
-        return  min <= angle && angle <= min + range;
+        return min;
+    }
+
+    private double getCurrentNoteAngleRange(Note note) {
+        double start = note.getPosition1();
+        double end = note.getPosition2();
+        if (start > end) {
+            double t = start;
+            start = end;
+            end = t;
+        }
+
+        return (end - start) / 10 * (Math.PI / 2);
+    }
+
+    private boolean touchedCorrectly(Note note, double angle, int line) {
+        double min = getCurrentNoteAngleStart(note, line);
+        double range = getCurrentNoteAngleRange(note);
+        return  (min <= angle && angle <= min + range) || (min <= angle + 2 * Math.PI && angle + 2 * Math.PI <= min + range);
+    }
+
+    private boolean matchColor(Note note, int line) {
+        double min = getCurrentNoteAngleStart(note, line);
+        double range = getCurrentNoteAngleRange(note);
+        int color = note.getColor();
+        if (min + range >= 2 * Math.PI) color += 4;
+
+        if (min + range < color * Math.PI / 2 || min > (color + 1) * Math.PI / 2) return false;
+        return (Math.min(min + range, (color + 1) * Math.PI / 2) - Math.max(min, color * Math.PI / 2)) / range > (2.0 / 3.0);
     }
 
     private float[] screenPointToViewRay(float ex, float ey) {
@@ -217,7 +262,12 @@ public class PlayScreen extends AppCompatActivity implements GLSurfaceView.Rende
             } else if (Math.abs(chart.bitToNanos(note.getBit()) - chart.bitToNanos(currentBit)) > JUDGE_TIME_GOOD * 1000000) {
                 makeJudgeEffect(note, touchedLine, BAD);
             } else if (Math.abs(chart.bitToNanos(note.getBit()) - chart.bitToNanos(currentBit)) > JUDGE_TIME_PERFECT * 1000000) {
-                Thread thread = new Thread(() -> {
+                if (matchColor(note, touchedLine)) {
+                    makeJudgeEffect(note, touchedLine, GOOD);
+                } else {
+                    makeJudgeEffect(note, touchedLine, BAD);
+                }
+                /*Thread thread = new Thread(() -> {
                     long last = System.nanoTime();
                     long now = 0;
                     while (now - last < 1000000000.0 / FRAME_RATE) {
@@ -234,9 +284,14 @@ public class PlayScreen extends AppCompatActivity implements GLSurfaceView.Rende
                     }
                     makeJudgeEffect(note, touchedLine, BAD);
                 });
-                thread.start();
+                thread.start();*/
             } else {
-                Thread thread = new Thread(() -> {
+                if (matchColor(note, touchedLine)) {
+                    makeJudgeEffect(note, touchedLine, PERFECT);
+                } else {
+                    makeJudgeEffect(note, touchedLine, BAD);
+                }
+                /*Thread thread = new Thread(() -> {
                     long last = System.nanoTime();
                     long now = 0;
                     while (now - last < 1000000000.0 / FRAME_RATE) {
@@ -253,7 +308,7 @@ public class PlayScreen extends AppCompatActivity implements GLSurfaceView.Rende
                     }
                     makeJudgeEffect(note, touchedLine, BAD);
                 });
-                thread.start();
+                thread.start();*/
             }
             deleteQueue[touchedLine].addLast(note);
         }
@@ -367,6 +422,8 @@ public class PlayScreen extends AppCompatActivity implements GLSurfaceView.Rende
             deleteQueue[i] = new LinkedList<>();
         }
         baseAngle = new double[10];
+        rotateAngle = 0;
+        isRollBack = false;
         for (int i = 0; i < SIDE_NUM; i++) {
             screenColor[i] = i;
             correctColor[i] = i;
@@ -587,9 +644,24 @@ public class PlayScreen extends AppCompatActivity implements GLSurfaceView.Rende
         finish();
     }*/
 
-    public void updateCurrentBit() {
-        currentBit = chart.nanosToBit((long) (chart.bitToNanos(currentBit) + System.nanoTime() - time));
+    public void updateFrame() {
+        long tick = System.nanoTime() - time;
+        double tickSeconds = ((double) tick) / 1000000000.0;
         time = System.nanoTime();
+
+
+        currentBit = chart.nanosToBit((long) (chart.bitToNanos(currentBit) + tick));
+
+        if (isRollBack) {
+            rotateAngle -= rotateAngle * tickSeconds / rollBackTime;
+            rollBackTime -= tickSeconds;
+            if (rollBackTime <= 0) {
+                rotateAngle = 0;
+                rollBackTime = 0;
+                isRollBack = false;
+            }
+        }
+        /*TODO : Lots of Things*/
     }
 
     private void makeIntent(Intent intent) {
@@ -611,7 +683,6 @@ public class PlayScreen extends AppCompatActivity implements GLSurfaceView.Rende
      * @param i : side
      */
     private void makeJudgeEffect(Note note, int i, String judge) {
-
         if (note.getColor() != -1 && note.getColor() != correctColor[i]) {
             if (note.getColor() == correctColor[(i+3)%4]) {
                 int t = correctColor[i];
@@ -705,7 +776,7 @@ public class PlayScreen extends AppCompatActivity implements GLSurfaceView.Rende
 
     @Override
     public void onDrawFrame(GL10 gl10) {
-        updateCurrentBit();
+        updateFrame();
 
         GLES30.glClear(GLES30.GL_COLOR_BUFFER_BIT);
         GLES30.glClear(GLES30.GL_DEPTH_BUFFER_BIT);
@@ -715,7 +786,7 @@ public class PlayScreen extends AppCompatActivity implements GLSurfaceView.Rende
         laneShape.draw();
         blankingShape.draw();
         for (int i = 0; i < SIDE_NUM; i++) {
-            noteShape.draw(screenNotes[i].size(), i, screenNotes[i], getZ(i));
+            noteShape.draw(screenNotes[i].size(), i, screenNotes[i], getZ(i), rotateAngle);
         }
     }
 

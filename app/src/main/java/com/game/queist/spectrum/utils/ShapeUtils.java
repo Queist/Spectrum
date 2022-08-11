@@ -114,7 +114,6 @@ public class ShapeUtils {
          texCoords[4 * i + 1] = 1.f;
          texCoords[4 * i + 2] = 1.f / LEVEL_OF_DETAIL * i;
          texCoords[4 * i + 3] = 0.f;
-         System.out.println(texCoords[4 * i]);
       }
       return texCoords;
    }
