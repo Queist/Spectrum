@@ -140,26 +140,23 @@ public class PlayScreen extends AppCompatActivity implements GLSurfaceView.Rende
         updateFrame();
 
         float[] viewRay = screenPointToViewRay(ev.getX(ev.getActionIndex()), ev.getY(ev.getActionIndex()));
+        viewRay = Vector.multiply(11.0f / 10.5f, viewRay); //cam vs lane dist.
+
         viewRay[2] = 0.f; //project to xy-plane
-        double radius = Math.abs(Vector.dotProduct(viewRay, new float[]{0.f, 0.f, 1.f}));
-        double angle = Math.acos(Vector.dotProduct(viewRay, new float[]{1.f, 0.f, 0.f}) / Vector.length(viewRay)); //right-hand
+        double radius = Vector.length(viewRay);
+        double angle = Math.acos(Vector.dotProduct(viewRay, new float[]{-1.f, 0.f, 0.f}) / radius); //right-hand
         if (viewRay[1] > 0) angle = 2 * Math.PI - angle; //right-hand
         int pointerId = ev.getPointerId(ev.getActionIndex());
-
-        System.out.println(Math.toDegrees(angle));
 
         if (ev.getActionMasked() == MotionEvent.ACTION_DOWN || ev.getActionMasked() == MotionEvent.ACTION_POINTER_DOWN) {
             tabTouch(radius, angle, pointerId);
         } else if (ev.getActionMasked() == MotionEvent.ACTION_MOVE) {
             if (dominantIndex == -1 || dominantIndex == pointerId && !isRollBack) {
                 dominantIndex = pointerId;
-                double ccw = angle - baseAngle[pointerId];
-                double cw = ccw > 0 ? ccw - 2 * Math.PI : ccw + 2 * Math.PI;
-                rotateAngle += Math.abs(ccw) <= Math.abs(cw) ? ccw : cw;
+                double cw = angle - baseAngle[pointerId];
+                double ccw = cw > 0 ? cw - 2 * Math.PI : cw + 2 * Math.PI;
+                rotateAngle += Math.abs(cw) <= Math.abs(ccw) ? cw : ccw;
                 baseAngle[pointerId] = angle;
-                System.out.println(Math.toDegrees(ccw));
-                System.out.println(Math.toDegrees(cw));
-                System.out.println(Math.toDegrees(rotateAngle));
             }
         } else if (ev.getActionMasked() == MotionEvent.ACTION_UP || ev.getActionMasked() == MotionEvent.ACTION_POINTER_UP) {
             if (ev.getPointerId(ev.getActionIndex()) == dominantIndex) {
@@ -173,7 +170,6 @@ public class PlayScreen extends AppCompatActivity implements GLSurfaceView.Rende
 
     private void tabTouch(double radius, double angle, int pointerID) {
         int touchedLine = getTouchedLine(radius, angle);
-
         if (touchedLine >= 0 && !screenNotes[touchedLine].isEmpty()) {
             ArrayList<Note> notes = Utility.getNextNotes(screenNotes[touchedLine]);
             for (Note note : notes) {
@@ -244,14 +240,16 @@ public class PlayScreen extends AppCompatActivity implements GLSurfaceView.Rende
     }
 
     private float[] screenPointToViewRay(float ex, float ey) {
+        ex -= frameLayoutPlay.getX();
+        ey -= frameLayoutPlay.getY();
         float x = 2 * (ex / width - 0.5f);
         float y = 2 * (ey / height - 0.5f);
         float[] result = new float[4];
         float[] tempMat = new float[16];
-        float[] screenRay = new float[]{x, y, 0.f, 1.f};
+        float[] screenRay = new float[]{x, y, -1.f, 1.f};
         Matrix.invertM(tempMat, 0, Shape.getProj(), 0);
         Matrix.multiplyMV(result, 0, tempMat, 0, screenRay, 0);
-
+        result = Vector.multiply(1 / result[3], result);
         return result;
     }
 

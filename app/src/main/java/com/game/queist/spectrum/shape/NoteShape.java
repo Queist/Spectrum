@@ -77,7 +77,7 @@ public class NoteShape extends Shape {
          }
 
          Matrix.setIdentityM(worlds[i], 0);
-         Matrix.rotateM(worlds[i], 0, (float) (Math.toDegrees(rotateAngle)), 0, 0, -1);
+         Matrix.rotateM(worlds[i], 0, (float) (Math.toDegrees(rotateAngle)), 0, 0, 1);
          Matrix.translateM(worlds[i], 0, 0, 0, (float) z[i]);
          colors[i][0] = Color.red(Utility.getNoteRGB(note.get(i).getColor())) / 255.f;
          colors[i][1] = Color.green(Utility.getNoteRGB(note.get(i).getColor())) / 255.f;
