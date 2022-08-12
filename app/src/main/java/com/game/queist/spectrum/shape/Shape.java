@@ -3,20 +3,17 @@ package com.game.queist.spectrum.shape;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
-import android.graphics.drawable.BitmapDrawable;
-import android.graphics.drawable.Drawable;
-import android.opengl.GLES20;
 import android.opengl.GLES30;
 import android.opengl.GLUtils;
 import android.opengl.Matrix;
 
-import com.game.queist.spectrum.R;
 import com.game.queist.spectrum.utils.Utility;
 
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.FloatBuffer;
 import java.nio.ShortBuffer;
+import java.util.HashMap;
 
 public abstract class Shape {
     private Context context;
@@ -70,8 +67,9 @@ public abstract class Shape {
     private int normalAttrIndex;
     private int texCoordsAttrIndex;
 
-    private int textureIndex;
-    private float[][] texTransform;
+    private String[] textures;
+    private HashMap<String, Integer> textureMap = new HashMap<>();
+    private float[][] texTransforms;
 
     public Shape(Context context) {
         this.context = context;
@@ -154,7 +152,9 @@ public abstract class Shape {
         this.worlds = worlds;
     }
 
-    public void setTexTransform(float[][] texTransform) { this.texTransform = texTransform; }
+    public void setTexTransforms(float[][] texTransforms) { this.texTransforms = texTransforms; }
+
+    public void setTextures(String[] textures) { this.textures = textures; }
 
     protected void generateVerticesAndIndices() {
         int[] vertexBufferIndex = new int[3];
@@ -222,7 +222,14 @@ public abstract class Shape {
         GLES30.glUniformMatrix4fv(worldHandle, 1, false, worlds[i], 0);
 
         int texTransformHandle = GLES30.glGetUniformLocation(program, "texTransform");
-        GLES30.glUniformMatrix4fv(texTransformHandle, 1, false, texTransform[i], 0);
+        GLES30.glUniformMatrix4fv(texTransformHandle, 1, false, texTransforms[i], 0);
+
+        /*Texture*/
+        int textureIndex = textureMap.get(textures[i]);
+        int textureHandle = GLES30.glGetUniformLocation(program, "texture1");
+        GLES30.glUniform1i(textureHandle, textureIndex);
+        GLES30.glActiveTexture(GLES30.GL_TEXTURE0 + textureIndex);
+        GLES30.glBindTexture(GLES30.GL_TEXTURE_2D, textureIndex);
     }
 
     private void bindMainPassCB() {
@@ -249,12 +256,6 @@ public abstract class Shape {
 
         int fresnelR0Handle = GLES30.glGetUniformLocation(program, "fresnelR0");
         GLES30.glUniform3fv(fresnelR0Handle, 1, fresnelR0, 0);
-
-        /*Texture*/
-        int textureHandle = GLES30.glGetUniformLocation(program, "texture1");
-        GLES30.glUniform1i(textureHandle, textureIndex);
-        GLES30.glActiveTexture(GLES30.GL_TEXTURE0 + textureIndex);
-        GLES30.glBindTexture(GLES30.GL_TEXTURE_2D, textureIndex);
     }
 
     protected void draw(int count, int[] startOffset, int[] length) {
@@ -288,13 +289,13 @@ public abstract class Shape {
         this.fragmentShader = Utility.loadShader(context, GLES30.GL_FRAGMENT_SHADER, shaderName);
     }
 
-    protected void createTexture(int resourceID) {
+    protected void createTexture(String textureName, int resourceID) {
         int[] textureID = new int[1];
         GLES30.glGenTextures(1, textureID, 0);
-        textureIndex = textureID[0];
+        textureMap.put(textureName, textureID[0]);
 
-        GLES30.glActiveTexture(textureIndex);
-        GLES30.glBindTexture(GLES30.GL_TEXTURE_2D, textureIndex);
+        GLES30.glActiveTexture(textureID[0]);
+        GLES30.glBindTexture(GLES30.GL_TEXTURE_2D, textureID[0]);
         Bitmap texture = BitmapFactory.decodeResource(context.getResources(), resourceID);
         GLUtils.texImage2D(GLES30.GL_TEXTURE_2D, 0, texture, 0);
         GLES30.glTexParameteri(GLES30.GL_TEXTURE_2D, GLES30.GL_TEXTURE_MIN_FILTER, GLES30.GL_LINEAR_MIPMAP_LINEAR);

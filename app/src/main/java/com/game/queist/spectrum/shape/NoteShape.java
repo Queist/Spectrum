@@ -12,37 +12,37 @@ import com.game.queist.spectrum.utils.Utility;
 
 import java.util.ArrayList;
 
-import androidx.annotation.IntRange;
-
 public class NoteShape extends Shape {
    private float radius;
-   private float width;
+   private float thickness;
 
    private float[][] colors;
 
-   public NoteShape(Context context, float radius, float width) {
+   public NoteShape(Context context, float radius, float thickness) {
       super(context);
       this.radius = radius;
-      this.width = width;
+      this.thickness = thickness;
       setMaterial(0.4f, new float[]{0.5f, 0.5f, 0.5f});
    }
 
    public NoteShape(Context context) {
       super(context);
       this.radius = 10.5f;
-      this.width = 2.f;
+      this.thickness = 2.f;
       setMaterial(0.4f, new float[]{0.5f, 0.5f, 0.5f});
    }
 
    @Override
    protected void initBufferResources() {
-      positions = ShapeUtils.buildCylinderPositions(radius, width);
+      positions = ShapeUtils.buildCylinderPositions(radius, thickness);
       normals = ShapeUtils.buildCylinderNormals();
       texCoords = ShapeUtils.buildCylinderTexCoords();
 
       indices = ShapeUtils.buildCylinderIndices();
 
-      createTexture(R.drawable.note_v2);
+      createTexture(Note.TAB, R.drawable.note);
+      createTexture(Note.SLIDE, R.drawable.note_v2);
+      createTexture(Note.LONG, R.drawable.note_v2);
    }
 
    @Override
@@ -56,8 +56,9 @@ public class NoteShape extends Shape {
       int[] length = new int[count];
 
       float[][] worlds = new float[count][16];
-      float[][] colors = new float[count][3];
+      float[][] colors = new float[count][4];
       float[][] texTransform = new float[count][16];
+      String[] textures = new String[count];
 
       for (int i = 0; i < count; i++) {
          float start = (float) note.get(i).getPosition1();
@@ -82,14 +83,18 @@ public class NoteShape extends Shape {
          colors[i][0] = Color.red(Utility.getNoteRGB(note.get(i).getColor())) / 255.f;
          colors[i][1] = Color.green(Utility.getNoteRGB(note.get(i).getColor())) / 255.f;
          colors[i][2] = Color.blue(Utility.getNoteRGB(note.get(i).getColor())) / 255.f;
+         colors[i][3] = 1.f; //TODO
          Matrix.setIdentityM(texTransform[i], 0);
          Matrix.scaleM(texTransform[i], 0, 1 / texCoords[length[i] * 4 / 6], 1, 1);
          Matrix.translateM(texTransform[i], 0, -texCoords[startOffset[i] * 4 / 6], 0, 0);
+
+         textures[i] = note.get(i).getKind();
       }
 
       setWorlds(worlds);
       setColors(colors);
-      setTexTransform(texTransform);
+      setTextures(textures);
+      setTexTransforms(texTransform);
 
       draw(count, startOffset, length);
    }
@@ -98,7 +103,7 @@ public class NoteShape extends Shape {
    protected void bindObjectPerCB(int i) {
       super.bindObjectPerCB(i);
       int colorHandle = GLES30.glGetUniformLocation(program, "color");
-      GLES30.glUniform3fv(colorHandle, 1, colors[i], 0);
+      GLES30.glUniform4fv(colorHandle, 1, colors[i], 0);
    }
 
    public float[][] getColors() {

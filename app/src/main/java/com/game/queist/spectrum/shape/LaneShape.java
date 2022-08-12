@@ -4,7 +4,6 @@ import android.content.Context;
 import android.opengl.GLES30;
 import android.opengl.Matrix;
 
-import com.game.queist.spectrum.R;
 import com.game.queist.spectrum.activities.PlayScreen;
 import com.game.queist.spectrum.utils.ShapeUtils;
 import com.game.queist.spectrum.utils.Utility;
@@ -105,7 +104,7 @@ public class LaneShape extends Shape {
       float[][] worlds = new float[1][16];
       Matrix.setIdentityM(worlds[0], 0);
       setWorlds(worlds);
-      setTexTransform(worlds);
+      setTexTransforms(worlds);
       draw(1, new int[]{0}, new int[]{indices.length});
    }
 }

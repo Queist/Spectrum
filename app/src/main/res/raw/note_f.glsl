@@ -6,7 +6,7 @@ precision mediump float;
 uniform vec3 camPosition;
 uniform vec3 lightPosition[3];
 uniform vec3 lightColor[3];
-uniform vec3 color;
+uniform vec4 color;
 
 uniform float shininess;
 uniform vec3 fresnelR0;
@@ -46,10 +46,10 @@ void main() {
     vec4 finalColor;
     vec4 textureColor = texture(texture1, (texTransform * vec4(f_TexCoords, 1.0, 1.0)).xy);
     if (textureColor.a == 1.0) {
-        finalColor = vec4(1.0, 1.0, 1.0, 1.0);
+        finalColor = vec4(1.0, 1.0, 1.0, 1.0) * color.a;
     }
     else {
-        finalColor = vec4(color, 1.0) * textureColor;
+        finalColor = color * textureColor;
     }
 
     if (finalColor.a < 0.05) discard;
