@@ -65,7 +65,13 @@ public class PlayScreen extends AppCompatActivity implements GLSurfaceView.Rende
     public final static String GOOD = "GOOD";
     public final static String PERFECT = "PERFECT";
 
+    public final static double NEAR = 10.5;
+    public final static double FAR = 1000.0;
+    public final static double CAM_Z = -11.0;
+    public final static double RADIUS = 10.5;
     private final static double BASE_Z = 20.0;
+    public final static double THICKNESS = 2.0;
+    public final static double BLEND_RATE = 0.1666667;
 
     public Chart chart;
     public static MediaPlayer bgm;
@@ -140,7 +146,7 @@ public class PlayScreen extends AppCompatActivity implements GLSurfaceView.Rende
         updateFrame();
 
         float[] viewRay = screenPointToViewRay(ev.getX(ev.getActionIndex()), ev.getY(ev.getActionIndex()));
-        viewRay = Vector.multiply(11.0f / 10.5f, viewRay); //cam vs lane dist.
+        viewRay = Vector.multiply((float) (RADIUS / NEAR), viewRay); //cam vs lane dist.
 
         viewRay[2] = 0.f; //project to xy-plane
         double radius = Vector.length(viewRay);
@@ -741,16 +747,16 @@ public class PlayScreen extends AppCompatActivity implements GLSurfaceView.Rende
         GLES30.glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
         GLES30.glClearDepthf(1.f);
 
-        noteShape = new NoteShape(this);
-        laneShape = new LaneShape(this);
-        blankingShape = new BlankingShape(this);
+        noteShape = new NoteShape(this, (float) RADIUS, (float) THICKNESS);
+        laneShape = new LaneShape(this, (float) RADIUS, (float) BASE_Z, (float) BLEND_RATE);
+        blankingShape = new BlankingShape(this, (float) RADIUS, (float) BASE_Z, (float) BLEND_RATE);
 
         noteShape.initialize();
         laneShape.initialize();
         blankingShape.initialize();
 
-        Shape.setCamara(new float[]{0.f, 0.f, -11.f}, new float[]{0.f, 0.f, 0.f});
-        Shape.setProj(90.f, ((float) width)/height, 10.5f, 1000.f);
+        Shape.setCamara(new float[]{0.f, 0.f, (float) CAM_Z}, new float[]{0.f, 0.f, 0.f});
+        Shape.setProj(90.f, ((float) width)/height, (float) NEAR, (float) FAR);
 
         Shape.setLight(new float[]{
                 0.f, 0.f, -5.f,
