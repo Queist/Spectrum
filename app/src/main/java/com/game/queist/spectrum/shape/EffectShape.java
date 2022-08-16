@@ -18,7 +18,7 @@ public class EffectShape extends Shape {
    float innerRadius;
    float depth;
 
-   public EffectShape(Context context, float innerRadius, float outerRadius, float depth) {
+   public EffectShape(Context context, float outerRadius, float innerRadius, float depth) {
       super(context);
       this.outerRadius = outerRadius;
       this.innerRadius = innerRadius;
@@ -40,7 +40,7 @@ public class EffectShape extends Shape {
 
       indices = ShapeUtils.buildRingIndices();
 
-      createTexture("Effect", R.drawable.note);
+      createTexture("Effect", R.drawable.judge_texture);
    }
 
    @Override
@@ -86,7 +86,7 @@ public class EffectShape extends Shape {
          colors[i][0] = Utility.judgeToInteger(judge) / 3.f;
          colors[i][1] = Utility.judgeToInteger(judge) / 3.f;
          colors[i][2] = Utility.judgeToInteger(judge) / 3.f;
-         colors[i][3] = lifeRatio; //TODO
+         colors[i][3] = 1.f - lifeRatio; //TODO
 
          Matrix.setIdentityM(texTransform[i], 0);
          Matrix.scaleM(texTransform[i], 0, 1 / texCoords[length[i] * 4 / 6], 1, 1);

@@ -225,11 +225,13 @@ public abstract class Shape {
         GLES30.glUniformMatrix4fv(texTransformHandle, 1, false, texTransforms[i], 0);
 
         /*Texture*/
-        int textureIndex = textureMap.get(textures[i]);
-        int textureHandle = GLES30.glGetUniformLocation(program, "texture1");
-        GLES30.glUniform1i(textureHandle, textureIndex);
-        GLES30.glActiveTexture(GLES30.GL_TEXTURE0 + textureIndex);
-        GLES30.glBindTexture(GLES30.GL_TEXTURE_2D, textureIndex);
+        if (textureMap.get(textures[i]) != null) {
+            int textureIndex = textureMap.get(textures[i]);
+            int textureHandle = GLES30.glGetUniformLocation(program, "texture1");
+            GLES30.glUniform1i(textureHandle, textureIndex);
+            GLES30.glActiveTexture(GLES30.GL_TEXTURE0 + textureIndex);
+            GLES30.glBindTexture(GLES30.GL_TEXTURE_2D, textureIndex);
+        }
     }
 
     private void bindMainPassCB() {

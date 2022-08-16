@@ -45,12 +45,7 @@ vec3 BlinnPhong(vec3 lightStrength, vec3 lightVec, vec3 normal, vec3 toEye, floa
 void main() {
     vec4 finalColor;
     vec4 textureColor = texture(texture1, (texTransform * vec4(f_TexCoords, 1.0, 1.0)).xy);
-    if (textureColor.a == 1.0) {
-        finalColor = vec4(1.0, 1.0, 1.0, 1.0) * color.a;
-    }
-    else {
-        finalColor = color * textureColor;
-    }
+    finalColor = color * textureColor;
 
     if (finalColor.a < 0.05) discard;
 

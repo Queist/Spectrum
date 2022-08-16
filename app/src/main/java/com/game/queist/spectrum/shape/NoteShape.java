@@ -30,7 +30,7 @@ public class NoteShape extends Shape {
    public NoteShape(Context context) {
       super(context);
       this.radius = 10.5f;
-      this.thickness = 2.f;
+      this.thickness = 1.f;
       setMaterial(0.4f, new float[]{0.5f, 0.5f, 0.5f});
    }
 
@@ -42,8 +42,8 @@ public class NoteShape extends Shape {
 
       indices = ShapeUtils.buildCylinderIndices();
 
-      createTexture(Note.TAB, R.drawable.note);
-      createTexture(Note.SLIDE, R.drawable.note_v2);
+      createTexture(Note.TAB, R.drawable.tab_note_texture);
+      createTexture(Note.SLIDE, R.drawable.slide_note_texture);
       createTexture(Note.LONG, R.drawable.note_v2);
    }
 

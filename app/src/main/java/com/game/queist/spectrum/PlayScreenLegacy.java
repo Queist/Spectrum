@@ -1084,8 +1084,8 @@ public class PlayScreenLegacy extends AppCompatActivity implements SurfaceHolder
             EffectFlag recentEffect = effectFlags.get(effectFlags.size()-1);
             Paint paint = new Paint();
             paint.setColor(Color.WHITE);
-            if (recentEffect.getLifeTime()<5) paint.setTextSize((float)width/(20+recentEffect.getLifeTime()*2));
-            else paint.setTextSize((float)width/30);
+            //if (recentEffect.getLifeTime()<5) paint.setTextSize((float)width/(20+recentEffect.getLifeTime()*2));
+            //else paint.setTextSize((float)width/30);
             paint.setTypeface(Typeface.create(Typeface.DEFAULT, Typeface.BOLD));
             paint.setTextAlign(Paint.Align.CENTER);
             paint.setTypeface(ResourcesCompat.getFont(this, R.font.black_han_sans));
@@ -1094,10 +1094,10 @@ public class PlayScreenLegacy extends AppCompatActivity implements SurfaceHolder
 
             for (Iterator<EffectFlag> iterator = effectFlags.iterator(); iterator.hasNext();) {
                 EffectFlag effectFlag = iterator.next();
-                if (effectFlag.checkTime()) {
+                if (effectFlag.lifeOver()) {
                     iterator.remove();
                 }
-                else if (effectFlag.getPosition1() >= 0) {
+                /*else if (effectFlag.getPosition1() >= 0) {
                     double[] info = getInfoForDraw(effectFlag.getNoteBit(), effectFlag.getCurrBit(), effectFlag.getPosition1(), effectFlag.getPosition2(), effectFlag.getQuadrant());
                     int[] color = Utility.getRGB(Utility.judgeToInteger(effectFlag.getEffect()), 160);
                     //paint.setARGB((255 * (EffectFlag.TOTAL_FRAME - effectFlag.getLifeTime()) * (EffectFlag.TOTAL_FRAME - effectFlag.getLifeTime()) / EffectFlag.TOTAL_FRAME / EffectFlag.TOTAL_FRAME), color[0],color[1],color[2]);
@@ -1107,7 +1107,7 @@ public class PlayScreenLegacy extends AppCompatActivity implements SurfaceHolder
                     paint.setStrokeCap(Paint.Cap.ROUND);
                     canvas.drawLine((float) info[0],(float) info[1],(float) info[2],(float) info[3], paint);
                     //effectFlag.update();
-                }
+                }*/
                 //else effectFlag.update();
             }
         }
