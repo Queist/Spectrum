@@ -6,11 +6,13 @@ import android.opengl.GLES30;
 import android.opengl.Matrix;
 
 import com.game.queist.spectrum.R;
+import com.game.queist.spectrum.chart.LongNote;
 import com.game.queist.spectrum.chart.Note;
 import com.game.queist.spectrum.utils.ShapeUtils;
 import com.game.queist.spectrum.utils.Utility;
 
 import java.util.ArrayList;
+import java.util.Objects;
 
 public class NoteShape extends Shape {
    private float radius;
@@ -79,11 +81,18 @@ public class NoteShape extends Shape {
 
          Matrix.setIdentityM(worlds[i], 0);
          Matrix.rotateM(worlds[i], 0, (float) (Math.toDegrees(rotateAngle)), 0, 0, 1);
-         Matrix.translateM(worlds[i], 0, 0, 0, (float) z[i]);
+         if (note.get(i).getKind().equals(Note.LONG)) {
+            LongNote longNote = (LongNote) note.get(i);
+            Matrix.translateM(worlds[i], 0, 0, 0, (float) (z[i] + longNote.getWorldWidth()/2 - thickness/2));
+            Matrix.scaleM(worlds[i], 0, 0, 0, (float) (longNote.getWorldWidth() / thickness));
+         }
+         else Matrix.translateM(worlds[i], 0, 0, 0, (float) z[i]);
+
          colors[i][0] = Color.red(Utility.getNoteRGB(note.get(i).getColor())) / 255.f;
          colors[i][1] = Color.green(Utility.getNoteRGB(note.get(i).getColor())) / 255.f;
          colors[i][2] = Color.blue(Utility.getNoteRGB(note.get(i).getColor())) / 255.f;
          colors[i][3] = 1.f; //TODO
+
          Matrix.setIdentityM(texTransform[i], 0);
          Matrix.scaleM(texTransform[i], 0, 1 / texCoords[length[i] * 4 / 6], 1, 1);
          Matrix.translateM(texTransform[i], 0, -texCoords[startOffset[i] * 4 / 6], 0, 0);

@@ -32,6 +32,7 @@ import android.widget.TextView;
 import com.game.queist.spectrum.R;
 import com.game.queist.spectrum.chart.Chart;
 import com.game.queist.spectrum.chart.EffectFlag;
+import com.game.queist.spectrum.chart.LongNote;
 import com.game.queist.spectrum.chart.Note;
 import com.game.queist.spectrum.shape.BlankingShape;
 import com.game.queist.spectrum.shape.LaneShape;
@@ -68,7 +69,7 @@ public class PlayScreen extends AppCompatActivity implements GLSurfaceView.Rende
     public final static double NEAR = 10.5;
     public final static double FAR = 1000.0;
     public final static double CAM_Z = -11.0;
-    public final static double RADIUS = 10.5;
+    public final static double RADIUS = 10.0;
     private final static double BASE_Z = 20.0;
     public final static double THICKNESS = 2.0;
     public final static double BLEND_RATE = 0.1666667;
@@ -746,6 +747,16 @@ public class PlayScreen extends AppCompatActivity implements GLSurfaceView.Rende
     public void onSurfaceCreated(GL10 gl10, EGLConfig eglConfig) {
         GLES30.glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
         GLES30.glClearDepthf(1.f);
+
+        //init long note length
+        for (int i = 0; i < SIDE_NUM; i++) {
+            for (Note note : queriedNotes[i]) {
+                if (note.getKind().equals(Note.LONG)) {
+                    LongNote longNote = (LongNote) note;
+                    longNote.setWorldWidth(longNote.getDuration() / bitInScreen * BASE_Z);
+                }
+            }
+        }
 
         noteShape = new NoteShape(this, (float) RADIUS, (float) THICKNESS);
         laneShape = new LaneShape(this, (float) RADIUS, (float) BASE_Z, (float) BLEND_RATE);

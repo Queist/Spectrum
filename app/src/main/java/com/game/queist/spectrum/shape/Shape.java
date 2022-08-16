@@ -68,7 +68,7 @@ public abstract class Shape {
     private int texCoordsAttrIndex;
 
     private String[] textures;
-    private HashMap<String, Integer> textureMap = new HashMap<>();
+    private static HashMap<String, Integer> textureMap = new HashMap<>();
     private float[][] texTransforms;
 
     public Shape(Context context) {

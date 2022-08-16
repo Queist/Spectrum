@@ -23,11 +23,11 @@ public class BlankingShape extends LaneShape {
             sideColors[i] = Utility.getBGRGB(i);
         }
 
-        positions = ShapeUtils.buildDiskPositions(radius, width);
-        colors = ShapeUtils.buildDiskColors(sideColors, blendRate);
-        normals = ShapeUtils.buildDiskNormals();
-        texCoords = ShapeUtils.buildDiskTexCoords();
+        positions = ShapeUtils.buildConePositions(radius, width);
+        colors = ShapeUtils.buildConeColors(sideColors, blendRate);
+        normals = ShapeUtils.buildConeNormals();
+        texCoords = ShapeUtils.buildConeTexCoords();
 
-        indices = ShapeUtils.buildDiskIndices();
+        indices = ShapeUtils.buildConeIndices();
     }
 }

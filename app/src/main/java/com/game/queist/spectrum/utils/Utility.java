@@ -25,6 +25,8 @@ import java.util.ArrayList;
 import java.util.Locale;
 import java.util.stream.Collectors;
 
+import androidx.annotation.Keep;
+
 public class Utility {
     public static double screenRate = 0;
     private static int[] color = new int[PlayScreen.SIDE_NUM];
