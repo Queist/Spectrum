@@ -705,7 +705,7 @@ public class PlayScreen extends AppCompatActivity implements GLSurfaceView.Rende
             case MISS :
                 combo = 0;
                 handler.post(() -> comboText.setText(String.format(Locale.US, "%d",combo)));
-                effectQueue.add(new EffectFlag(EffectFlag.MISS, note.getPosition1(), i, note.getPosition2(), note.getBit(), currentBit));
+                //effectQueue.add(new EffectFlag(EffectFlag.MISS, note.getPosition1(), i, note.getPosition2(), note.getBit(), currentBit));
                 break;
 
             case BAD :
@@ -714,7 +714,7 @@ public class PlayScreen extends AppCompatActivity implements GLSurfaceView.Rende
                 handler.post(() -> Utility.startCountAnimation(score, getScore(), scoreText, 100));
                 handler.post(() -> comboText.setText(String.format(Locale.US, "%d",combo)));
                 score = getScore();
-                effectQueue.add(new EffectFlag(EffectFlag.BAD, note.getPosition1(), i, note.getPosition2(), note.getBit(), currentBit));
+                //effectQueue.add(new EffectFlag(EffectFlag.BAD, note.getPosition1(), i, note.getPosition2(), note.getBit(), currentBit));
                 break;
 
             case GOOD :
@@ -724,7 +724,7 @@ public class PlayScreen extends AppCompatActivity implements GLSurfaceView.Rende
                 handler.post(() -> comboText.setText(String.format(Locale.US, "%d",combo)));
                 score = getScore();
                 if (maxCombo < combo) maxCombo = combo;
-                effectQueue.add(new EffectFlag(EffectFlag.GOOD, note.getPosition1(), i, note.getPosition2(), note.getBit(), currentBit));
+                //effectQueue.add(new EffectFlag(EffectFlag.GOOD, note.getPosition1(), i, note.getPosition2(), note.getBit(), currentBit));
                 break;
 
             case PERFECT :
@@ -734,7 +734,7 @@ public class PlayScreen extends AppCompatActivity implements GLSurfaceView.Rende
                 handler.post(() -> comboText.setText(String.format(Locale.US, "%d",combo)));
                 score = getScore();
                 if (maxCombo < combo) maxCombo = combo;
-                effectQueue.add(new EffectFlag(EffectFlag.PERFECT, note.getPosition1(), i, note.getPosition2(), note.getBit(), currentBit));
+                //effectQueue.add(new EffectFlag(EffectFlag.PERFECT, note.getPosition1(), i, note.getPosition2(), note.getBit(), currentBit));
                 break;
 
             default :

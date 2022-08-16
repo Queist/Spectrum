@@ -1084,7 +1084,7 @@ public class PlayScreenLegacy extends AppCompatActivity implements SurfaceHolder
             EffectFlag recentEffect = effectFlags.get(effectFlags.size()-1);
             Paint paint = new Paint();
             paint.setColor(Color.WHITE);
-            if (recentEffect.getFrame()<5) paint.setTextSize((float)width/(20+recentEffect.getFrame()*2));
+            if (recentEffect.getLifeTime()<5) paint.setTextSize((float)width/(20+recentEffect.getLifeTime()*2));
             else paint.setTextSize((float)width/30);
             paint.setTypeface(Typeface.create(Typeface.DEFAULT, Typeface.BOLD));
             paint.setTextAlign(Paint.Align.CENTER);
@@ -1094,21 +1094,21 @@ public class PlayScreenLegacy extends AppCompatActivity implements SurfaceHolder
 
             for (Iterator<EffectFlag> iterator = effectFlags.iterator(); iterator.hasNext();) {
                 EffectFlag effectFlag = iterator.next();
-                if (effectFlag.checkFrame()) {
+                if (effectFlag.checkTime()) {
                     iterator.remove();
                 }
                 else if (effectFlag.getPosition1() >= 0) {
                     double[] info = getInfoForDraw(effectFlag.getNoteBit(), effectFlag.getCurrBit(), effectFlag.getPosition1(), effectFlag.getPosition2(), effectFlag.getQuadrant());
                     int[] color = Utility.getRGB(Utility.judgeToInteger(effectFlag.getEffect()), 160);
-                    paint.setARGB((255 * (EffectFlag.TOTAL_FRAME - effectFlag.getFrame()) * (EffectFlag.TOTAL_FRAME - effectFlag.getFrame()) / EffectFlag.TOTAL_FRAME / EffectFlag.TOTAL_FRAME), color[0],color[1],color[2]);
+                    //paint.setARGB((255 * (EffectFlag.TOTAL_FRAME - effectFlag.getLifeTime()) * (EffectFlag.TOTAL_FRAME - effectFlag.getLifeTime()) / EffectFlag.TOTAL_FRAME / EffectFlag.TOTAL_FRAME), color[0],color[1],color[2]);
                     paint.setStrokeWidth((float) info[4]);
                     paint.setStyle(Paint.Style.FILL);
                     //paint.setMaskFilter(null);
                     paint.setStrokeCap(Paint.Cap.ROUND);
                     canvas.drawLine((float) info[0],(float) info[1],(float) info[2],(float) info[3], paint);
-                    effectFlag.update();
+                    //effectFlag.update();
                 }
-                else effectFlag.update();
+                //else effectFlag.update();
             }
         }
 
@@ -1247,7 +1247,7 @@ public class PlayScreenLegacy extends AppCompatActivity implements SurfaceHolder
             case MISS :
                 combo = 0;
                 handler.post(() -> comboText.setText(String.format(Locale.US, "%d",combo)));
-                effectBuffer.add(new EffectFlag(EffectFlag.MISS, note.getPosition1(), i, note.getPosition2(), note.getBit(), currentBit));
+                //effectBuffer.add(new EffectFlag(EffectFlag.MISS, note.getPosition1(), i, note.getPosition2(), note.getBit(), currentBit));
                 if (note.getColor() != -1) colorFixFlag = true;
                 break;
 
@@ -1257,7 +1257,7 @@ public class PlayScreenLegacy extends AppCompatActivity implements SurfaceHolder
                 handler.post(() -> Utility.startCountAnimation(score, getScore(), scoreText, 100));
                 handler.post(() -> comboText.setText(String.format(Locale.US, "%d",combo)));
                 score = getScore();
-                effectBuffer.add(new EffectFlag(EffectFlag.BAD, note.getPosition1(), i, note.getPosition2(), note.getBit(), currentBit));
+                //effectBuffer.add(new EffectFlag(EffectFlag.BAD, note.getPosition1(), i, note.getPosition2(), note.getBit(), currentBit));
                 if (note.getColor() != -1) colorFixFlag = true;
                 break;
 
@@ -1268,7 +1268,7 @@ public class PlayScreenLegacy extends AppCompatActivity implements SurfaceHolder
                 handler.post(() -> comboText.setText(String.format(Locale.US, "%d",combo)));
                 score = getScore();
                 if (maxCombo < combo) maxCombo = combo;
-                effectBuffer.add(new EffectFlag(EffectFlag.GOOD, note.getPosition1(), i, note.getPosition2(), note.getBit(), currentBit));
+                //effectBuffer.add(new EffectFlag(EffectFlag.GOOD, note.getPosition1(), i, note.getPosition2(), note.getBit(), currentBit));
                 break;
 
             case PERFECT :
@@ -1278,7 +1278,7 @@ public class PlayScreenLegacy extends AppCompatActivity implements SurfaceHolder
                 handler.post(() -> comboText.setText(String.format(Locale.US, "%d",combo)));
                 score = getScore();
                 if (maxCombo < combo) maxCombo = combo;
-                effectBuffer.add(new EffectFlag(EffectFlag.PERFECT, note.getPosition1(), i, note.getPosition2(), note.getBit(), currentBit));
+                //effectBuffer.add(new EffectFlag(EffectFlag.PERFECT, note.getPosition1(), i, note.getPosition2(), note.getBit(), currentBit));
                 break;
 
             default :

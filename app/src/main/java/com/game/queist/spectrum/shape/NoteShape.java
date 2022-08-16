@@ -53,7 +53,7 @@ public class NoteShape extends Shape {
       setFragmentShader("note_f");
    }
 
-   public void draw(int count, int quadrant, ArrayList<Note> note, double[] z, double rotateAngle) {
+   public void draw(int count, int quadrant, ArrayList<Note> notes, double[] z, double rotateAngle) {
       int[] startOffset = new int[count];
       int[] length = new int[count];
 
@@ -63,8 +63,8 @@ public class NoteShape extends Shape {
       String[] textures = new String[count];
 
       for (int i = 0; i < count; i++) {
-         float start = (float) note.get(i).getPosition1();
-         float end = (float) note.get(i).getPosition2();
+         float start = (float) notes.get(i).getPosition1();
+         float end = (float) notes.get(i).getPosition2();
          if (start > end) {
             float t = start;
             start = end;
@@ -81,23 +81,23 @@ public class NoteShape extends Shape {
 
          Matrix.setIdentityM(worlds[i], 0);
          Matrix.rotateM(worlds[i], 0, (float) (Math.toDegrees(rotateAngle)), 0, 0, 1);
-         if (note.get(i).getKind().equals(Note.LONG)) {
-            LongNote longNote = (LongNote) note.get(i);
+         if (notes.get(i).getKind().equals(Note.LONG)) {
+            LongNote longNote = (LongNote) notes.get(i);
             Matrix.translateM(worlds[i], 0, 0, 0, (float) (z[i] + longNote.getWorldWidth()/2 - thickness/2));
             Matrix.scaleM(worlds[i], 0, 0, 0, (float) (longNote.getWorldWidth() / thickness));
          }
          else Matrix.translateM(worlds[i], 0, 0, 0, (float) z[i]);
 
-         colors[i][0] = Color.red(Utility.getNoteRGB(note.get(i).getColor())) / 255.f;
-         colors[i][1] = Color.green(Utility.getNoteRGB(note.get(i).getColor())) / 255.f;
-         colors[i][2] = Color.blue(Utility.getNoteRGB(note.get(i).getColor())) / 255.f;
+         colors[i][0] = Color.red(Utility.getNoteRGB(notes.get(i).getColor())) / 255.f;
+         colors[i][1] = Color.green(Utility.getNoteRGB(notes.get(i).getColor())) / 255.f;
+         colors[i][2] = Color.blue(Utility.getNoteRGB(notes.get(i).getColor())) / 255.f;
          colors[i][3] = 1.f; //TODO
 
          Matrix.setIdentityM(texTransform[i], 0);
          Matrix.scaleM(texTransform[i], 0, 1 / texCoords[length[i] * 4 / 6], 1, 1);
          Matrix.translateM(texTransform[i], 0, -texCoords[startOffset[i] * 4 / 6], 0, 0);
 
-         textures[i] = note.get(i).getKind();
+         textures[i] = notes.get(i).getKind();
       }
 
       setWorlds(worlds);
