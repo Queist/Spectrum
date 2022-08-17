@@ -1,3 +1,4 @@
+Header	Spectrum	Legacy
 BPM	190.0	0.0
 Note	Auto	2	-1.0	-1.0	8.0	2
 Note	Auto	2	-1.0	-1.0	9.0	-1

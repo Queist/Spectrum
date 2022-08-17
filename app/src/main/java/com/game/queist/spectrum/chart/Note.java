@@ -2,18 +2,18 @@ package com.game.queist.spectrum.chart;
 
 public class Note extends BitObject {
     private String kind;
-    private double pos1;
-    private double pos2;
+    private double start;
+    private double range;
     private int color; //Color color;
     public final static String TAB = "Tab";
     public final static String SLIDE = "Slide";
     public final static String LONG = "Long";
 
-    public Note(String kind, double pos1, double bit, double pos2, int color) {
+    public Note(String kind, double start, double range, double bit, int color) {
         super(bit);
         this.kind = kind;
-        this.pos1 = pos1;
-        this.pos2 = pos2;
+        this.start = start;
+        this.range = range;
         this.color = color;
     }
 
@@ -21,12 +21,12 @@ public class Note extends BitObject {
         return kind;
     }
 
-    public double getPosition1() {
-        return pos1;
+    public double getStart() {
+        return start;
     }
 
-    public double getPosition2() {
-        return pos2;
+    public double getRange() {
+        return range;
     }
 
     public int getColor() {
@@ -34,6 +34,6 @@ public class Note extends BitObject {
     }
 
     public boolean equals(Note note) {
-        return (super.equals(note) && note.kind.equals(this.kind) && note.pos1 == this.pos1 && note.pos2 == this.pos2 && note.color == this.color);
+        return (super.equals(note) && note.kind.equals(this.kind) && note.start == this.start && note.range == this.range && note.color == this.color);
     }
 }

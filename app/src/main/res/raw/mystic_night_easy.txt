@@ -1,3 +1,4 @@
+Header	Spectrum	Legacy
 Offset	1977
 BPM	130	0
 Note	Tab	0	5	7	0	-1

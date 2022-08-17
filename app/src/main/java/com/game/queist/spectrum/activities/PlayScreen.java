@@ -1,12 +1,11 @@
 package com.game.queist.spectrum.activities;
 
 import android.content.Intent;
-import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
-import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Point;
 import android.media.MediaPlayer;
+import android.opengl.EGL14;
+import android.opengl.EGL15;
 import android.opengl.GLES30;
 import android.opengl.GLSurfaceView;
 import android.opengl.Matrix;
@@ -49,6 +48,7 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.Locale;
 
+import javax.microedition.khronos.egl.EGL10;
 import javax.microedition.khronos.egl.EGLConfig;
 import javax.microedition.khronos.opengles.GL10;
 
@@ -97,8 +97,6 @@ public class PlayScreen extends AppCompatActivity implements GLSurfaceView.Rende
     int maxCombo;
     int score;
     int totalNotes;
-    int[] screenColor = new int[SIDE_NUM];
-    int[] correctColor = new int[SIDE_NUM];
     boolean lockTouchEvent;
     boolean finishFlag;
 
@@ -118,17 +116,14 @@ public class PlayScreen extends AppCompatActivity implements GLSurfaceView.Rende
     private boolean isRollBack;
     private double rollBackTime;
 
-    ArrayList<Note>[] queriedNotes;
-    ArrayList<Note>[] screenNotes;
-    LinkedList<Note>[] deleteQueue;
+    ArrayList<Note> queriedNotes;
+    ArrayList<Note> screenNotes;
+    LinkedList<Note> deleteQueue;
     ArrayList<Double> queriedLines;
     ArrayList<Double> screenLines;
     ArrayList<EffectFlag> effectFlags = new ArrayList<>();
     LinkedList<EffectFlag> effectQueue;
 
-    Bitmap background;
-    Bitmap innerLine;
-    Bitmap[] colorSide = new Bitmap[SIDE_NUM];
     int width;
     int height;
 
@@ -178,13 +173,12 @@ public class PlayScreen extends AppCompatActivity implements GLSurfaceView.Rende
     }
 
     private void tabTouch(double radius, double angle, int pointerID) {
-        int touchedLine = getTouchedLine(radius, angle);
-        if (touchedLine >= 0 && !screenNotes[touchedLine].isEmpty()) {
-            ArrayList<Note> notes = Utility.getNextNotes(screenNotes[touchedLine]);
+        if (hasTouchLine(radius) && !screenNotes.isEmpty()) {
+            ArrayList<Note> notes = Utility.getNextNotes(screenNotes);
             for (Note note : notes) {
-                if (touchedCorrectly(note, angle, touchedLine)) {
+                if (touchedCorrectly(note, angle)) {
                     if (note.getKind().equals(Note.TAB)) {
-                        makeTabNoteJudge(note, touchedLine);
+                        makeTabNoteJudge(note);
                     }
                 }
             }
@@ -197,56 +191,41 @@ public class PlayScreen extends AppCompatActivity implements GLSurfaceView.Rende
         return (int) x;
     }
 
-    private int getTouchedLine(double radius, double angle) {
-        if (5 < radius && radius < 15) { //TODO
-            return (int) Math.floor(angle / (Math.PI / 2));
-        }
-        else return -1;
+    private boolean hasTouchLine(double radius) {
+        //TODO
+        return 5 < radius && radius < 15;
     }
 
-    private double getCurrentNoteAngleStart(Note note, int line) {
-        double start = note.getPosition1();
-        double end = note.getPosition2();
-        if (start > end) {
-            double t = start;
-            start = end;
-            end = t;
-        }
-
-        double min = line % 2 == 0 ? ((10 - end) / 10 + line) * (Math.PI / 2) : (start / 10 + line) * (Math.PI / 2);
-        min += rotateAngle;
-        double n = Math.ceil(-min / (2 * Math.PI));
-        min += 2 * Math.PI * n;
-        return min;
-    }
-
-    private double getCurrentNoteAngleRange(Note note) {
-        double start = note.getPosition1();
-        double end = note.getPosition2();
-        if (start > end) {
-            double t = start;
-            start = end;
-            end = t;
-        }
-
-        return (end - start) / 10 * (Math.PI / 2);
-    }
-
-    private boolean touchedCorrectly(Note note, double angle, int line) {
-        double min = getCurrentNoteAngleStart(note, line);
-        double range = getCurrentNoteAngleRange(note);
+    private boolean touchedCorrectly(Note note, double angle) {
+        double min = Utility.plusAngle(Math.toRadians(note.getStart()), rotateAngle);
+        double range = Math.toRadians(note.getRange());
         return  (min <= angle && angle <= min + range) || (min <= angle + 2 * Math.PI && angle + 2 * Math.PI <= min + range);
     }
 
-    private boolean matchColor(Note note, int line) {
+    private boolean matchColor(Note note) {
         if (note.getColor() == -1) return true;
-        double min = getCurrentNoteAngleStart(note, line);
-        double range = getCurrentNoteAngleRange(note);
+        double min = Utility.plusAngle(Math.toRadians(note.getStart()), rotateAngle);
+        double range = Math.toRadians(note.getRange());
         int color = note.getColor();
-        if (min + range >= 2 * Math.PI) color += 4;
 
-        if (min + range < color * Math.PI / 2 || min > (color + 1) * Math.PI / 2) return false;
-        return (Math.min(min + range, (color + 1) * Math.PI / 2) - Math.max(min, color * Math.PI / 2)) / range > (2.0 / 3.0);
+        ArrayList<Double[]> rangeList = new ArrayList<>();
+        while (true) {
+            if (min + range > 2 * Math.PI) {
+                rangeList.add(new Double[]{min, 2 * Math.PI});
+                range -= 2 * Math.PI - min;
+                min = 0;
+            }
+            else {
+                rangeList.add(new Double[]{min, min + range});
+                break;
+            }
+        }
+
+        double result = 0;
+        for (Double[] interval: rangeList) {
+            result += Math.max(0, Math.min(interval[1], (color + 1) * Math.PI / 2) - Math.max(interval[0], color * Math.PI / 2));
+        }
+        return result >= Math.min(Math.PI / 2, note.getRange() * (2.0 / 3.0));
     }
 
     private float[] screenPointToViewRay(float ex, float ey) {
@@ -263,80 +242,44 @@ public class PlayScreen extends AppCompatActivity implements GLSurfaceView.Rende
         return result;
     }
 
-    private void makeTabNoteJudge(Note note, int touchedLine) {
+    private void makeTabNoteJudge(Note note) {
         double diff = chart.bitToNanos(note.getBit()) - chart.bitToNanos(currentBit);
         if (Math.abs(diff) <= AWARE_TIME * 1000000) {
             if (Math.abs(diff) > JUDGE_TIME_BAD * 1000000) {
-                makeJudgeEffect(note, touchedLine, MISS);
+                makeJudgeEffect(note, MISS);
             } else if (Math.abs(diff) > JUDGE_TIME_GOOD * 1000000) {
-                makeJudgeEffect(note, touchedLine, BAD);
+                makeJudgeEffect(note, BAD);
             } else if (Math.abs(diff) > JUDGE_TIME_PERFECT * 1000000) {
-                if (matchColor(note, touchedLine)) {
-                    makeJudgeEffect(note, touchedLine, GOOD);
+                if (matchColor(note)) {
+                    makeJudgeEffect(note, GOOD);
                 } else {
-                    makeJudgeEffect(note, touchedLine, BAD);
+                    makeJudgeEffect(note, BAD);
                 }
-                /*Thread thread = new Thread(() -> {
-                    long last = System.nanoTime();
-                    long now = 0;
-                    while (now - last < 1000000000.0 / FRAME_RATE) {
-                        now = System.nanoTime();
-                        if (screenColor[touchedLine] == note.getColor() || note.getColor() == -1) {
-                            makeJudgeEffect(note, touchedLine, GOOD);
-                            return;
-                        }
-                        try {
-                            Thread.sleep(1);
-                        } catch (InterruptedException e) {
-                            e.printStackTrace();
-                        }
-                    }
-                    makeJudgeEffect(note, touchedLine, BAD);
-                });
-                thread.start();*/
             } else {
-                if (matchColor(note, touchedLine)) {
-                    makeJudgeEffect(note, touchedLine, PERFECT);
+                if (matchColor(note)) {
+                    makeJudgeEffect(note, PERFECT);
                 } else {
-                    makeJudgeEffect(note, touchedLine, BAD);
+                    makeJudgeEffect(note, BAD);
                 }
-                /*Thread thread = new Thread(() -> {
-                    long last = System.nanoTime();
-                    long now = 0;
-                    while (now - last < 1000000000.0 / FRAME_RATE) {
-                        now = System.nanoTime();
-                        if (screenColor[touchedLine] == note.getColor() || note.getColor() == -1) {
-                            makeJudgeEffect(note, touchedLine, PERFECT);
-                            return;
-                        }
-                        try {
-                            Thread.sleep(1);
-                        } catch (InterruptedException e) {
-                            e.printStackTrace();
-                        }
-                    }
-                    makeJudgeEffect(note, touchedLine, BAD);
-                });
-                thread.start();*/
             }
-            deleteQueue[touchedLine].addLast(note);
+            deleteQueue.addLast(note);
         }
     }
 
-    private void makeSlideNoteJudge(Note note, int quadrant) {
+    private void makeSlideNoteJudge(Note note) {
         boolean dontRemove = false;
         double diff = chart.bitToNanos(note.getBit()) - chart.bitToNanos(currentBit);
         if (diff <= JUDGE_TIME_PERFECT * 1000000) {
             if (diff < -JUDGE_TIME_GOOD * 1000000) {
-                makeJudgeEffect(note, quadrant, BAD);
-            } else if (diff < -JUDGE_TIME_PERFECT * 1000000 && matchColor(note, quadrant)) {
-                makeJudgeEffect(note, quadrant, GOOD);
-            } else if (Math.abs(diff) <= JUDGE_TIME_PERFECT * 1000000 && matchColor(note, quadrant)) {
-                makeJudgeEffect(note, quadrant, PERFECT);
+                makeJudgeEffect(note, BAD);
+            } else if (diff < -JUDGE_TIME_PERFECT * 1000000 && matchColor(note)) {
+                makeJudgeEffect(note,  GOOD);
+            } else if (Math.abs(diff) <= JUDGE_TIME_PERFECT * 1000000 && matchColor(note)) {
+                makeJudgeEffect(note, PERFECT);
             }
             else dontRemove = true;
 
-            if (!dontRemove) deleteQueue[quadrant].addLast(note);
+            if (!dontRemove) deleteQueue.addLast(note);
         }
     }
 
@@ -426,13 +369,33 @@ public class PlayScreen extends AppCompatActivity implements GLSurfaceView.Rende
         Utility.setScreenRate((double)height/(double)width);
 
         surfaceView.setEGLContextClientVersion(3);
-        int redSize     =  8;
-        int greenSize   =  8;
-        int blueSize    =  8;
-        int alphaSize   =  8;
-        int depthSize   = 16;
-        int stencilSize =  8;
-        surfaceView.setEGLConfigChooser( redSize,greenSize, blueSize,alphaSize, depthSize, stencilSize );
+        surfaceView.setEGLConfigChooser((egl, display) -> {
+            int[] attrs = {
+                    EGL10.EGL_LEVEL, 0,
+                    EGL10.EGL_RENDERABLE_TYPE, android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.Q ?
+                                                    EGL15.EGL_OPENGL_ES3_BIT : EGL14.EGL_OPENGL_ES2_BIT,
+                    EGL10.EGL_COLOR_BUFFER_TYPE, EGL10.EGL_RGB_BUFFER,
+                    EGL10.EGL_RED_SIZE, 8,
+                    EGL10.EGL_GREEN_SIZE, 8,
+                    EGL10.EGL_BLUE_SIZE, 8,
+                    EGL10.EGL_ALPHA_SIZE, 8,
+                    EGL10.EGL_DEPTH_SIZE, 16,
+                    EGL10.EGL_STENCIL_SIZE, 8,
+                    EGL10.EGL_SAMPLE_BUFFERS, 1,
+                    EGL10.EGL_SAMPLES, 4,  // This is for 4x MSAA.
+                    EGL10.EGL_NONE
+            };
+            EGLConfig[] configs = new EGLConfig[1];
+            int[] configCounts = new int[1];
+            egl.eglChooseConfig(display, attrs, configs, 1, configCounts);
+
+            if (configCounts[0] == 0) {
+                // Failed! Error handling.
+                return null;
+            } else {
+                return configs[0];
+            }
+        } );
         surfaceView.setRenderer(this);
         surfaceView.setRenderMode(GLSurfaceView.RENDERMODE_CONTINUOUSLY);
         surfaceView.setDebugFlags(GLSurfaceView.DEBUG_CHECK_GL_ERROR | GLSurfaceView.DEBUG_LOG_GL_CALLS);
@@ -441,19 +404,13 @@ public class PlayScreen extends AppCompatActivity implements GLSurfaceView.Rende
         queriedLines = chart.getEquivalenceLines();
         totalNotes = chart.getTotalNotes();
         screenLines = new ArrayList<>();
-        screenNotes = new ArrayList[SIDE_NUM];
-        deleteQueue = new LinkedList[SIDE_NUM];
-        for (int i=0; i < SIDE_NUM; i++) {
-            screenNotes[i] = new ArrayList<>();
-            deleteQueue[i] = new LinkedList<>();
-        }
+        screenNotes = new ArrayList<>();
+        deleteQueue = new LinkedList<>();
+
         baseAngle = new double[10];
         rotateAngle = 0;
         isRollBack = false;
-        for (int i = 0; i < SIDE_NUM; i++) {
-            screenColor[i] = i;
-            correctColor[i] = i;
-        }
+
         pausedTime = 0;
         pausedClock = 0;
         now = 0;
@@ -464,28 +421,6 @@ public class PlayScreen extends AppCompatActivity implements GLSurfaceView.Rende
         badCount = 0;
         combo = 0;
         maxCombo = 0;
-
-        Bitmap coverBitmap = BitmapFactory.decodeResource(getResources(), R.drawable.result_bg);
-        coverBitmap = Bitmap.createScaledBitmap(coverBitmap, width, height, false);
-        Bitmap backgroundRaw = BitmapFactory.decodeResource(getResources(), R.drawable.background_raw1);
-        backgroundRaw = Bitmap.createScaledBitmap(backgroundRaw, width, height, false);
-        background = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
-        Canvas canvas = new Canvas(background);
-        canvas.drawBitmap(coverBitmap, 0, 0, null);
-        canvas.drawBitmap(backgroundRaw, 0, 0, null);
-        coverBitmap.recycle();
-        backgroundRaw.recycle();
-        innerLine = BitmapFactory.decodeResource(getResources(), R.drawable.inner_line_raw);
-        innerLine = Bitmap.createScaledBitmap(innerLine, width/5, height/5, false);
-        Utility.initNoteColor(this);
-        for (int i = 0; i < SIDE_NUM; i++) {
-            int color = DataManager.getData(this).getColor(i);
-            float saturation = DataManager.getData(this).getSaturationBG(i);
-            int id = getResources().getIdentifier(String.format(Locale.US, "color%02d",color), "drawable", this.getPackageName());
-            colorSide[i] = BitmapFactory.decodeResource(getResources(), id);
-            colorSide[i] = SpectrumAlign.retouch(this, colorSide[i], saturation, i);
-            colorSide[i] = Bitmap.createScaledBitmap(colorSide[i], width/2, height/2, false);
-        }
 
         pauseButton.setOnClickListener((view) -> {
             prevGamePhase.setFlag(gamePhase.getFlag());
@@ -711,16 +646,13 @@ public class PlayScreen extends AppCompatActivity implements GLSurfaceView.Rende
         intent.putExtra("artist",artist);
     }
 
-    /**
-     * @param quadrant : side
-     */
-    private void makeJudgeEffect(Note note, int quadrant, String judge) {
+    private void makeJudgeEffect(Note note, String judge) {
         System.out.println("Hello");
         switch (judge) {
             case MISS :
                 combo = 0;
                 handler.post(() -> comboText.setText(String.format(Locale.US, "%d",combo)));
-                effectQueue.add(new EffectFlag(EffectFlag.MISS, note.getPosition1(), quadrant, note.getPosition2(), rotateAngle));
+                effectQueue.add(new EffectFlag(EffectFlag.MISS, note.getStart(), note.getRange(), rotateAngle));
                 break;
 
             case BAD :
@@ -729,7 +661,7 @@ public class PlayScreen extends AppCompatActivity implements GLSurfaceView.Rende
                 handler.post(() -> Utility.startCountAnimation(score, getScore(), scoreText, 100));
                 handler.post(() -> comboText.setText(String.format(Locale.US, "%d",combo)));
                 score = getScore();
-                effectQueue.add(new EffectFlag(EffectFlag.BAD, note.getPosition1(), quadrant, note.getPosition2(), rotateAngle));
+                effectQueue.add(new EffectFlag(EffectFlag.BAD, note.getStart(), note.getRange(), rotateAngle));
                 break;
 
             case GOOD :
@@ -739,7 +671,7 @@ public class PlayScreen extends AppCompatActivity implements GLSurfaceView.Rende
                 handler.post(() -> comboText.setText(String.format(Locale.US, "%d",combo)));
                 score = getScore();
                 if (maxCombo < combo) maxCombo = combo;
-                effectQueue.add(new EffectFlag(EffectFlag.GOOD, note.getPosition1(), quadrant, note.getPosition2(), rotateAngle));
+                effectQueue.add(new EffectFlag(EffectFlag.GOOD, note.getStart(), note.getRange(), rotateAngle));
                 break;
 
             case PERFECT :
@@ -749,7 +681,7 @@ public class PlayScreen extends AppCompatActivity implements GLSurfaceView.Rende
                 handler.post(() -> comboText.setText(String.format(Locale.US, "%d",combo)));
                 score = getScore();
                 if (maxCombo < combo) maxCombo = combo;
-                effectQueue.add(new EffectFlag(EffectFlag.PERFECT, note.getPosition1(), quadrant, note.getPosition2(), rotateAngle));
+                effectQueue.add(new EffectFlag(EffectFlag.PERFECT, note.getStart(), note.getRange(), rotateAngle));
                 break;
 
             default :
@@ -763,13 +695,10 @@ public class PlayScreen extends AppCompatActivity implements GLSurfaceView.Rende
         GLES30.glClearColor(0.5f, 0.0f, 0.0f, 1.0f);
         GLES30.glClearDepthf(1.f);
 
-        //init long note length
-        for (int i = 0; i < SIDE_NUM; i++) {
-            for (Note note : queriedNotes[i]) {
-                if (note.getKind().equals(Note.LONG)) {
-                    LongNote longNote = (LongNote) note;
-                    longNote.setWorldWidth(longNote.getDuration() / bitInScreen * BASE_Z);
-                }
+        for (Note note : queriedNotes) {
+            if (note.getKind().equals(Note.LONG)) {
+                LongNote longNote = (LongNote) note;
+                longNote.setWorldWidth((longNote.getEndBit() - longNote.getBit()) / bitInScreen * BASE_Z);
             }
         }
 
@@ -820,29 +749,23 @@ public class PlayScreen extends AppCompatActivity implements GLSurfaceView.Rende
         laneShape.draw();
         blankingShape.draw();
         effectShape.draw(effectFlags.size(), effectFlags);
-        for (int i = 0; i < SIDE_NUM; i++) {
-            noteShape.draw(screenNotes[i].size(), i, screenNotes[i], getZ(i), rotateAngle);
-        }
+        noteShape.draw(screenNotes.size(), screenNotes, getZ(), rotateAngle);
     }
 
     private void reduceNote() {
-        for (int i = 0; i < SIDE_NUM; i++) {
-            for (Note note: screenNotes[i]) {
-                if (note.getKind().equals(Note.SLIDE)) makeSlideNoteJudge(note, i);
-                if (note.getKind().equals(Note.TAB) &&
-                        chart.bitToNanos(note.getBit()) - chart.bitToNanos(currentBit) < -JUDGE_TIME_BAD * 1000000) {
-                    makeJudgeEffect(note, i, MISS);
-                    deleteQueue[i].add(note);
-                }
+        for (Note note: screenNotes) {
+            if (note.getKind().equals(Note.SLIDE)) makeSlideNoteJudge(note);
+            if (note.getKind().equals(Note.TAB) &&
+                    chart.bitToNanos(note.getBit()) - chart.bitToNanos(currentBit) < -JUDGE_TIME_BAD * 1000000) {
+                makeJudgeEffect(note, MISS);
+                deleteQueue.add(note);
             }
         }
 
-        for (int i = 0; i < SIDE_NUM; i++) {
-            int count = deleteQueue[i].size();
-            for (int j = 0; j < count; j++) {
-                screenNotes[i].remove(deleteQueue[i].getFirst());
-                deleteQueue[i].removeFirst();
-            }
+        int count = deleteQueue.size();
+        for (int j = 0; j < count; j++) {
+            screenNotes.remove(deleteQueue.getFirst());
+            deleteQueue.removeFirst();
         }
     }
 
@@ -867,23 +790,27 @@ public class PlayScreen extends AppCompatActivity implements GLSurfaceView.Rende
 
         screenLines.removeIf(bit -> chart.bitToNanos(currentBit) > chart.bitToNanos(bit));
 
-        for (int i=0; i < SIDE_NUM; i++) {
-            for (Iterator<Note> iterator = queriedNotes[i].iterator(); iterator.hasNext();) {
-                Note note = iterator.next();
-                if (note.getBit() - bitInScreen < currentBit ) {
-                    screenNotes[i].add(note);
-                    iterator.remove();
-                }
-                else break;
+        for (Iterator<Note> iterator = queriedNotes.iterator(); iterator.hasNext();) {
+            Note note = iterator.next();
+            if (note.getBit() - bitInScreen < currentBit) {
+                screenNotes.add(note);
+                iterator.remove();
             }
+            else break;
         }
     }
 
-    private double[] getZ(int side) {
-        double[] z = new double[screenNotes[side].size()];
-        for (int i = 0; i < screenNotes[side].size(); i++) {
-            Note note = screenNotes[side].get(i);
-            if (note.getBit() < currentBit) z[i] = 0;
+    private double[] getZ() {
+        double[] z = new double[screenNotes.size()];
+        for (int i = 0; i < screenNotes.size(); i++) {
+            Note note = screenNotes.get(i);
+            if (note.getBit() < currentBit) {
+                z[i] = 0;
+                if (note.getKind().equals(Note.LONG)) {
+                    LongNote longNote = (LongNote) note;
+                    longNote.setWorldWidth((longNote.getEndBit() - currentBit) / bitInScreen * BASE_Z);
+                }
+            }
             else {
                 z[i] = (note.getBit() - currentBit) / bitInScreen * BASE_Z;
             }

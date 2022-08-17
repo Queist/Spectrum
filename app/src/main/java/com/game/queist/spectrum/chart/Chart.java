@@ -2,7 +2,7 @@ package com.game.queist.spectrum.chart;
 
 import android.util.Pair;
 
-import com.game.queist.spectrum.activities.PlayScreen;
+import com.game.queist.spectrum.utils.Utility;
 
 import java.io.BufferedReader;
 import java.io.InputStream;
@@ -31,7 +31,7 @@ import java.util.Comparator;
 
 public class Chart {
 
-    private ArrayList<Note>[] notes;
+    private ArrayList<Note> notes;
     private ArrayList<Pair<Integer, Double>> helper;
     private ArrayList<Double> equivalenceLines;
     private ArrayList<BPM> bpms;
@@ -41,8 +41,7 @@ public class Chart {
 
     public Chart(InputStream chartFile) {
         totalNotes = 0;
-        notes = new ArrayList[PlayScreen.SIDE_NUM];
-        for (int i=0; i<PlayScreen.SIDE_NUM; i++) notes[i] = new ArrayList<>();
+        notes = new ArrayList<>();
         bpms = new ArrayList<>();
         helper = new ArrayList<>();
         equivalenceLines = new ArrayList<>();
@@ -54,26 +53,58 @@ public class Chart {
         try {
             BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(chartFile, StandardCharsets.UTF_8));
             String readLine;
+            readLine = bufferedReader.readLine();
+            String[] hAttr =readLine.split("\t");
+            if (!(hAttr[0].equals("Header") && hAttr[1].equals("Spectrum"))) {
+                throw new Exception("Error in Parsing Spectrum Chart Header");
+            }
+
             while ((readLine = bufferedReader.readLine()) != null) {
                 String[] attr = readLine.split("\t");
                 switch (attr[0]) {
-                    case "Offset" :
+                    case "Offset":
                         offset = Integer.parseInt(attr[1]);
                         break;
 
-                    case "BPM" :
+                    case "BPM":
                         bpms.add(new BPM(Double.parseDouble(attr[1]), Double.parseDouble(attr[2])));
                         break;
 
-                    case "Note" :
+                    case "Note":
                         Integer side = Integer.parseInt(attr[2]);
-                        Note note = new Note(attr[1], Double.parseDouble(attr[3]), Double.parseDouble(attr[5]),
-                                Double.parseDouble(attr[4]), Integer.parseInt(attr[6]));
-                        notes[side].add(note);
-                        if (note.getKind().equals(Note.TAB)) helper.add(new Pair<>(side, note.getBit()));
+                        Note note;
+                        if (hAttr[2].equals("Legacy")) {
+                            note = Utility.getNoteFromLegacyFormat(
+                                    attr[1],
+                                    Integer.parseInt(attr[2]),
+                                    Double.parseDouble(attr[3]),
+                                    Double.parseDouble(attr[4]),
+                                    Double.parseDouble(attr[5]),
+                                    Integer.parseInt(attr[6]));
+                        }
+                        else {
+                            if (attr[1].equals(Note.LONG)) {
+                                note = new LongNote(attr[1],
+                                        Double.parseDouble(attr[2]),
+                                        Double.parseDouble(attr[3]),
+                                        Double.parseDouble(attr[4]),
+                                        Integer.parseInt(attr[5]),
+                                        Double.parseDouble(attr[6]));
+                            }
+                            else {
+                                note = new Note(attr[1],
+                                    Double.parseDouble(attr[2]),
+                                    Double.parseDouble(attr[3]),
+                                    Double.parseDouble(attr[4]),
+                                    Integer.parseInt(attr[5]));
+                            }
+                        }
+                        notes.add(note);
+                        if (note.getKind().equals(Note.TAB) || note.getKind().equals(Note.LONG))
+                            helper.add(new Pair<>(side, note.getBit()));
                         break;
 
-                    default :
+                    default:
                         break;
                 }
             }
@@ -83,7 +114,7 @@ public class Chart {
         } finally {
             double recentBit = -8000;
             int recentSide = -1;
-            for (int i = 0; i < PlayScreen.SIDE_NUM; i++) { totalNotes += notes[i].size(); }
+            totalNotes += notes.size();
             for (int i = 0; i < helper.size(); i++) {
                 if (recentBit != helper.get(i).second) {
                     recentBit = helper.get(i).second;
@@ -103,7 +134,7 @@ public class Chart {
 
     public double bitToNanos(double bit) {
         double time = 0;
-        if (bit < 0) return (double) bit * 60000.0 * 1000000 / bpms.get(0).getValue();
+        if (bit < 0) return bit * 60000.0 * 1000000 / bpms.get(0).getValue();
         if (bpms.size() == 1) return 60000.0 * 1000000 / bpms.get(0).getValue() * bit;
         for (int i=0; i<bpms.size(); i++) {
             BPM current = bpms.get(i);
@@ -120,7 +151,7 @@ public class Chart {
         return time;
     }
 
-    public ArrayList[] getNotes() { return notes; }
+    public ArrayList<Note> getNotes() { return notes; }
 
     public double getCurrentBPM (double bit) {
         if (bit <= 0) {

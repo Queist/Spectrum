@@ -279,4 +279,20 @@ public class Utility {
         // 완성된 쉐이더의 인덱스를 리턴.
         return shader;
     }
+
+    public static double plusAngle(double angle1, double angle2) {
+        double n = Math.floor((angle1 + angle2) / (2 * Math.PI));
+        return angle1 + angle2 - 2 * Math.PI * n;
+    }
+
+    public static Note getNoteFromLegacyFormat(String kind, int side, double pos1, double pos2, double bit, int color) {
+        if (pos1 > pos2) {
+            double temp = pos1;
+            pos1 = pos2;
+            pos2 = temp;
+        }
+        double start = side%2 == 0 ? 90 * side + (10 - pos2) * 9 : 90 * side + pos1 * 9;
+        double range = 9 * (pos2 - pos1);
+        return new Note(kind, start, range, bit, color);
+    }
 }

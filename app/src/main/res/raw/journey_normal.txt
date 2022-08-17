@@ -1,3 +1,4 @@
+Header	Spectrum	Legacy
 Offset	705
 BPM	100	0
 Note	Tab	0	4	6	16	-1

@@ -59,29 +59,17 @@ public class EffectShape extends Shape {
       String[] textures = new String[count];
 
       for (int i = 0; i < count; i++) {
-         float start = (float) effects.get(i).getPosition1();
-         float end = (float) effects.get(i).getPosition2();
+         float start = (float) effects.get(i).getStart();
+         float range = (float) effects.get(i).getRange();
          float lifeRatio = (float) (effects.get(i).getLifeTime() / EffectFlag.TOTAL_LIFETIME);
          String judge = effects.get(i).getEffect();
          double rotateAngle = effects.get(i).getRotateAngle();
 
-         int quadrant = effects.get(i).getQuadrant();
-         if (start > end) {
-            float t = start;
-            start = end;
-            end = t;
-         }
-         if (quadrant%2 == 0) {
-            startOffset[i] = (int)((indices.length / 24) * quadrant + (indices.length / 240) * (10 - end)) * 6;
-            length[i] = (int)((indices.length / 240) * (end - start)) * 6;
-         }
-         else {
-            startOffset[i] = (int)((indices.length / 24) * quadrant + (indices.length / 240) * start) * 6;
-            length[i] = (int)((indices.length / 240) * (end - start)) * 6;
-         }
+         startOffset[i] = 0;
+         length[i] = (int)((indices.length / 6) * (range / 360)) * 6;
 
          Matrix.setIdentityM(worlds[i], 0);
-         Matrix.rotateM(worlds[i], 0, (float) (Math.toDegrees(rotateAngle)), 0, 0, 1);
+         Matrix.rotateM(worlds[i], 0, (float) (Math.toDegrees(rotateAngle) + start), 0, 0, 1);
 
          colors[i][0] = Utility.judgeToInteger(judge) / 3.f;
          colors[i][1] = Utility.judgeToInteger(judge) / 3.f;
@@ -90,7 +78,6 @@ public class EffectShape extends Shape {
 
          Matrix.setIdentityM(texTransform[i], 0);
          Matrix.scaleM(texTransform[i], 0, 1 / texCoords[length[i] * 4 / 6], 1, 1);
-         Matrix.translateM(texTransform[i], 0, -texCoords[startOffset[i] * 4 / 6], 0, 0);
 
          textures[i] = "Effect";
       }

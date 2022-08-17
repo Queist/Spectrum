@@ -6,31 +6,25 @@ public class EffectFlag {
     public final static String MISS = "MISS", BAD = "BAD", GOOD = "GOOD", PERFECT = "PERFECT";
     private String effect;
     private double lifeTime;
-    private double position1;
-    private int quadrant;
-    private double position2;
+    private double start;
+    private double range;
 
     private double rotateAngle;
 
-    public EffectFlag(String effect, double position1, int quadrant, double position2, double rotateAngle) {
+    public EffectFlag(String effect, double start, double range, double rotateAngle) {
         this.effect = effect;
-        this.position1 = position1;
-        this.quadrant = quadrant;
-        this.position2 = position2;
+        this.start = start;
+        this.range = range;
         this.lifeTime = 0;
         this.rotateAngle = rotateAngle;
     }
 
-    public int getQuadrant() {
-        return quadrant;
+    public double getStart() {
+        return start;
     }
 
-    public double getPosition1() {
-        return position1;
-    }
-
-    public double getPosition2() {
-        return position2;
+    public double getRange() {
+        return range;
     }
 
     public double getLifeTime() {

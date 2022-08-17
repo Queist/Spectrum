@@ -12,7 +12,6 @@ import com.game.queist.spectrum.utils.ShapeUtils;
 import com.game.queist.spectrum.utils.Utility;
 
 import java.util.ArrayList;
-import java.util.Objects;
 
 public class NoteShape extends Shape {
    private float radius;
@@ -53,7 +52,7 @@ public class NoteShape extends Shape {
       setFragmentShader("note_f");
    }
 
-   public void draw(int count, int quadrant, ArrayList<Note> notes, double[] z, double rotateAngle) {
+   public void draw(int count, ArrayList<Note> notes, double[] z, double rotateAngle) {
       int[] startOffset = new int[count];
       int[] length = new int[count];
 
@@ -63,24 +62,14 @@ public class NoteShape extends Shape {
       String[] textures = new String[count];
 
       for (int i = 0; i < count; i++) {
-         float start = (float) notes.get(i).getPosition1();
-         float end = (float) notes.get(i).getPosition2();
-         if (start > end) {
-            float t = start;
-            start = end;
-            end = t;
-         }
-         if (quadrant%2 == 0) {
-            startOffset[i] = (int)((indices.length / 24) * quadrant + (indices.length / 240) * (10 - end)) * 6;
-            length[i] = (int)((indices.length / 240) * (end - start)) * 6;
-         }
-         else {
-            startOffset[i] = (int)((indices.length / 24) * quadrant + (indices.length / 240) * start) * 6;
-            length[i] = (int)((indices.length / 240) * (end - start)) * 6;
-         }
+         float start = (float) notes.get(i).getStart();
+         float range = (float) notes.get(i).getRange();
+
+         startOffset[i] = 0;
+         length[i] = (int)((indices.length / 6) * (range / 360)) * 6;
 
          Matrix.setIdentityM(worlds[i], 0);
-         Matrix.rotateM(worlds[i], 0, (float) (Math.toDegrees(rotateAngle)), 0, 0, 1);
+         Matrix.rotateM(worlds[i], 0, (float) (Math.toDegrees(rotateAngle) + start), 0, 0, 1);
          if (notes.get(i).getKind().equals(Note.LONG)) {
             LongNote longNote = (LongNote) notes.get(i);
             Matrix.translateM(worlds[i], 0, 0, 0, (float) (z[i] + longNote.getWorldWidth()/2 - thickness/2));
@@ -95,7 +84,6 @@ public class NoteShape extends Shape {
 
          Matrix.setIdentityM(texTransform[i], 0);
          Matrix.scaleM(texTransform[i], 0, 1 / texCoords[length[i] * 4 / 6], 1, 1);
-         Matrix.translateM(texTransform[i], 0, -texCoords[startOffset[i] * 4 / 6], 0, 0);
 
          textures[i] = notes.get(i).getKind();
       }

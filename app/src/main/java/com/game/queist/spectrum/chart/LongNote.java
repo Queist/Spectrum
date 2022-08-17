@@ -1,7 +1,7 @@
 package com.game.queist.spectrum.chart;
 
 public class LongNote extends Note {
-    private double duration;
+    private double endBit;
 
     public double getWorldWidth() {
         return worldWidth;
@@ -13,12 +13,12 @@ public class LongNote extends Note {
 
     private double worldWidth;
 
-    public LongNote(String kind, double pos1, double bit, double pos2, int color, double duration) {
+    public LongNote(String kind, double pos1, double bit, double pos2, int color, double endBit) {
         super(kind, pos1, bit, pos2, color);
-        this.duration = duration;
+        this.endBit = endBit;
     }
 
-    public double getDuration() {
-        return duration;
+    public double getEndBit() {
+        return endBit;
     }
 }
