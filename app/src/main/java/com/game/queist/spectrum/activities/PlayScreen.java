@@ -422,6 +422,8 @@ public class PlayScreen extends AppCompatActivity implements GLSurfaceView.Rende
         combo = 0;
         maxCombo = 0;
 
+        Utility.initNoteColor(this);
+
         pauseButton.setOnClickListener((view) -> {
             prevGamePhase.setFlag(gamePhase.getFlag());
             gamePhase.setFlag(GamePhase.PAUSE);
@@ -647,7 +649,6 @@ public class PlayScreen extends AppCompatActivity implements GLSurfaceView.Rende
     }
 
     private void makeJudgeEffect(Note note, String judge) {
-        System.out.println("Hello");
         switch (judge) {
             case MISS :
                 combo = 0;

@@ -8,6 +8,7 @@ public class Note extends BitObject {
     public final static String TAB = "Tab";
     public final static String SLIDE = "Slide";
     public final static String LONG = "Long";
+    public final static String AUTO = "Auto";
 
     public Note(String kind, double start, double range, double bit, int color) {
         super(bit);

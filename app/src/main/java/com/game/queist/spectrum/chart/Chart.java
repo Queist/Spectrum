@@ -73,6 +73,9 @@ public class Chart {
                     case "Note":
                         Integer side = Integer.parseInt(attr[2]);
                         Note note;
+                        if (!checkNoteKind(attr[1])) {
+                            throw new Exception("Error in Parsing Spectrum Chart Body");
+                        }
                         if (hAttr[2].equals("Legacy")) {
                             note = Utility.getNoteFromLegacyFormat(
                                     attr[1],
@@ -105,7 +108,7 @@ public class Chart {
                         break;
 
                     default:
-                        break;
+                        throw new Exception("Error in Parsing Spectrum Chart Body");
                 }
             }
 
@@ -189,6 +192,9 @@ public class Chart {
 
     public int getOffset() { return offset; }
 
+    private boolean checkNoteKind(String kind) {
+        return kind.equals(Note.TAB) || kind.equals(Note.LONG) || kind.equals(Note.SLIDE) || kind.equals(Note.AUTO);
+    }
 
 }
 

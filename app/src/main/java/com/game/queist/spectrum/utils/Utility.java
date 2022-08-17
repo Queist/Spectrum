@@ -293,6 +293,8 @@ public class Utility {
         }
         double start = side%2 == 0 ? 90 * side + (10 - pos2) * 9 : 90 * side + pos1 * 9;
         double range = 9 * (pos2 - pos1);
-        return new Note(kind, start, range, bit, color);
+        if (kind.equals(Note.AUTO)) {
+            return new Note(Note.SLIDE, 90 * side, 90, bit, color);
+        } else return new Note(kind, start, range, bit, color);
     }
 }
