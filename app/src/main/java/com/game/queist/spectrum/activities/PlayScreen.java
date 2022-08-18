@@ -101,18 +101,13 @@ public class PlayScreen extends AppCompatActivity implements GLSurfaceView.Rende
     boolean finishFlag;
 
     Handler handler;
-    private long start;
     private long offset;
-    private long pausedTime;
-    private long pausedClock;
-    private long now;
-    private long dt;
     private double currentBit;
     private double bitInScreen;
 
     private double rotateAngle;
     double[] baseAngle;
-    int dominantIndex; //TODO : Init in onCreate
+    int dominantIndex;
     private boolean isRollBack;
     private double rollBackTime;
 
@@ -126,9 +121,6 @@ public class PlayScreen extends AppCompatActivity implements GLSurfaceView.Rende
 
     int width;
     int height;
-
-    GamePhase gamePhase;
-    GamePhase prevGamePhase;
 
     NoteShape noteShape;
     LaneShape laneShape;
@@ -330,8 +322,6 @@ public class PlayScreen extends AppCompatActivity implements GLSurfaceView.Rende
             getWindow().getAttributes().layoutInDisplayCutoutMode = WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES;
         }
 
-        gamePhase = new GamePhase();
-        prevGamePhase = new GamePhase();
         handler = new Handler();
         effectQueue = new LinkedList<>();
         lockTouchEvent = false;
@@ -411,10 +401,6 @@ public class PlayScreen extends AppCompatActivity implements GLSurfaceView.Rende
         rotateAngle = 0;
         isRollBack = false;
 
-        pausedTime = 0;
-        pausedClock = 0;
-        now = 0;
-        dt = 0;
         currentBit = chart.nanosToBit(-offset);
         perfectCount = 0;
         goodCount = 0;
@@ -425,11 +411,10 @@ public class PlayScreen extends AppCompatActivity implements GLSurfaceView.Rende
         Utility.initNoteColor(this);
 
         pauseButton.setOnClickListener((view) -> {
-            prevGamePhase.setFlag(gamePhase.getFlag());
-            gamePhase.setFlag(GamePhase.PAUSE);
             if (!finishFlag) bgm.pause();
             layerPause.setVisibility(View.VISIBLE);
             lockTouchEvent = true;
+            surfaceView.onPause();
         });
 
         resumeButton.setOnClickListener((view) -> {
@@ -437,7 +422,7 @@ public class PlayScreen extends AppCompatActivity implements GLSurfaceView.Rende
             lockTouchEvent = false;
             if (!finishFlag) bgm.start();
             time = System.nanoTime();
-            gamePhase.setFlag(prevGamePhase.getFlag());
+            surfaceView.onResume();
         });
 
         quitButton.setOnClickListener((view) -> {
@@ -445,7 +430,6 @@ public class PlayScreen extends AppCompatActivity implements GLSurfaceView.Rende
             bgm.release();
             keySound.release();
             finishFlag  = true;
-            gamePhase.setFlag(GamePhase.QUIT);
             Bundle bundle = ActivityOptionsCompat.makeCustomAnimation(this,
                     android.R.anim.fade_in, android.R.anim.fade_out).toBundle();
             startActivity(intentBack, bundle);
@@ -453,11 +437,11 @@ public class PlayScreen extends AppCompatActivity implements GLSurfaceView.Rende
         });
 
         retryButton.setOnClickListener((view) -> {
+            surfaceView.onPause();
             Intent intentRetry = new Intent(this, PlayScreen.class);
             bgm.release();
             keySound.release();
             finishFlag = true;
-            gamePhase.setFlag(GamePhase.QUIT);
             Bundle bundle = ActivityOptionsCompat.makeCustomAnimation( this,
                     android.R.anim.fade_in, android.R.anim.fade_out).toBundle();
             intentRetry.putExtra("name", songName);
@@ -473,7 +457,7 @@ public class PlayScreen extends AppCompatActivity implements GLSurfaceView.Rende
     @Override
     protected void onPause() {
         super.onPause();
-        if (gamePhase.getFlag() != GamePhase.END) {
+        if (!finishFlag) {
             pauseButton.performClick();
         }
     }
@@ -533,80 +517,6 @@ public class PlayScreen extends AppCompatActivity implements GLSurfaceView.Rende
         if (!lockTouchEvent) pauseButton.performClick();
     }
 
-    /*private void start() {
-        try {
-            if (Build.VERSION.SDK_INT > 25) canvas = surfaceView.getHolder().lockHardwareCanvas();
-            else canvas = surfaceView.getHolder().lockCanvas();
-            synchronized (surfaceView.getHolder()) {
-                drawBG(canvas);
-            }
-            surfaceView.getHolder().unlockCanvasAndPost(canvas);
-        } catch (Exception e) {
-            e.printStackTrace();
-        } finally {
-            time = System.nanoTime();
-            gamePhase.setFlag(GamePhase.PLAY);
-        }
-    }
-
-    private void play() {
-        try {
-            long elapsedTime = System.nanoTime() - now;
-            long sleepTime = (long) (1000000000.0/FRAME_RATE - elapsedTime);
-
-            if (Build.VERSION.SDK_INT > 25) canvas = surfaceView.getHolder().lockHardwareCanvas();
-            else canvas = surfaceView.getHolder().lockCanvas();
-            if (canvas == null) {
-                Thread.sleep(1);
-                return;
-            }
-
-            if (sleepTime/1000000 > 0) Thread.sleep(sleepTime/1000000);
-
-            synchronized (surfaceView.getHolder()) {
-                now = System.nanoTime();
-                surfaceUpdate();
-                surfaceRender(canvas);
-            }
-
-            surfaceView.getHolder().unlockCanvasAndPost(canvas);
-        } catch (Exception e) {
-            e.printStackTrace();
-        } finally {
-            if (chart.bitToNanos(currentBit) + offset > (long) bgm.getDuration()*1000000) {
-                gamePhase.setFlag(GamePhase.END);
-            }
-        }
-    }
-
-    private void end() {
-        try {
-            if (Build.VERSION.SDK_INT > 25) canvas = surfaceView.getHolder().lockHardwareCanvas();
-            else canvas = surfaceView.getHolder().lockCanvas();
-            synchronized (surfaceView.getHolder()) {
-                drawBG(canvas);
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-        } finally {
-            if (canvas != null) surfaceView.getHolder().unlockCanvasAndPost(canvas);
-        }
-        try {
-            Thread.sleep(1500);
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        Intent intent = new Intent(this, Result.class);
-        makeIntent(intent);
-        bgm.release();
-        keySound.release();
-        finishFlag = true;
-        Bundle bundle = ActivityOptionsCompat.makeCustomAnimation(this,
-                android.R.anim.fade_in, android.R.anim.fade_out).toBundle();
-        startActivity(intent, bundle);
-        finish();
-    }*/
-
     public void updateFrame() {
         long tick = System.nanoTime() - time;
         double tickSeconds = ((double) tick) / 1000000000.0;
@@ -630,6 +540,19 @@ public class PlayScreen extends AppCompatActivity implements GLSurfaceView.Rende
             EffectFlag effect = iterator.next();
             effect.update(tickSeconds);
             if (effect.lifeOver()) iterator.remove();
+        }
+
+        if (chart.bitToNanos(currentBit) + offset > (long) (bgm.getDuration() + 0.5)*1000000) {
+            surfaceView.onPause();
+            Intent intent = new Intent(this, Result.class);
+            makeIntent(intent);
+            bgm.release();
+            keySound.release();
+            finishFlag = true;
+            Bundle bundle = ActivityOptionsCompat.makeCustomAnimation(this,
+                    android.R.anim.fade_in, android.R.anim.fade_out).toBundle();
+            startActivity(intent, bundle);
+            finish();
         }
     }
 
