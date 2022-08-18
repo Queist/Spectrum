@@ -11,11 +11,6 @@ import android.opengl.GLSurfaceView;
 import android.opengl.Matrix;
 import android.os.Build;
 import android.os.Bundle;
-
-import androidx.annotation.Nullable;
-import androidx.appcompat.app.AppCompatActivity;
-import androidx.core.app.ActivityOptionsCompat;
-
 import android.os.Handler;
 import android.view.MotionEvent;
 import android.view.View;
@@ -39,7 +34,6 @@ import com.game.queist.spectrum.shape.LaneShape;
 import com.game.queist.spectrum.shape.NoteShape;
 import com.game.queist.spectrum.shape.Shape;
 import com.game.queist.spectrum.utils.DataManager;
-import com.game.queist.spectrum.utils.GamePhase;
 import com.game.queist.spectrum.utils.Utility;
 import com.game.queist.spectrum.utils.Vector;
 
@@ -51,6 +45,10 @@ import java.util.Locale;
 import javax.microedition.khronos.egl.EGL10;
 import javax.microedition.khronos.egl.EGLConfig;
 import javax.microedition.khronos.opengles.GL10;
+
+import androidx.annotation.Nullable;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.app.ActivityOptionsCompat;
 
 public class PlayScreen extends AppCompatActivity implements GLSurfaceView.Renderer {
 
@@ -131,9 +129,6 @@ public class PlayScreen extends AppCompatActivity implements GLSurfaceView.Rende
     @Override
     public boolean dispatchTouchEvent(MotionEvent ev) {
         if (lockTouchEvent) return super.dispatchTouchEvent(ev);
-        //if (gamePhase.getFlag() == GamePhase.START) return super.dispatchTouchEvent(ev);
-
-        //updateFrame();
 
         float[] viewRay = screenPointToViewRay(ev.getX(ev.getActionIndex()), ev.getY(ev.getActionIndex()));
         viewRay = Vector.multiply((float) (RADIUS / NEAR), viewRay); //cam vs lane dist.
@@ -158,7 +153,9 @@ public class PlayScreen extends AppCompatActivity implements GLSurfaceView.Rende
             if (ev.getPointerId(ev.getActionIndex()) == dominantIndex) {
                 dominantIndex = -1;
                 isRollBack = true;
-                rollBackTime = 0.5; //TODO : rollBackTime = min(nearestNoteTime, currentChartRollBackTimer);
+                ArrayList<Note> nearestNotes = Utility.getNextNotes(screenNotes);
+                double nearestNoteTime = nearestNotes.isEmpty() ? 0.5 : (chart.bitToNanos(nearestNotes.get(0).getBit()) - chart.bitToNanos(currentBit)) / 1000000000.0;
+                rollBackTime = Math.min(nearestNoteTime, 0.5);
             }
         }
         return super.dispatchTouchEvent(ev);
@@ -414,7 +411,6 @@ public class PlayScreen extends AppCompatActivity implements GLSurfaceView.Rende
             if (!finishFlag) bgm.pause();
             layerPause.setVisibility(View.VISIBLE);
             lockTouchEvent = true;
-            surfaceView.onPause();
         });
 
         resumeButton.setOnClickListener((view) -> {
@@ -460,6 +456,7 @@ public class PlayScreen extends AppCompatActivity implements GLSurfaceView.Rende
         if (!finishFlag) {
             pauseButton.performClick();
         }
+        surfaceView.onPause();
     }
 
     @Override
@@ -542,8 +539,7 @@ public class PlayScreen extends AppCompatActivity implements GLSurfaceView.Rende
             if (effect.lifeOver()) iterator.remove();
         }
 
-        if (chart.bitToNanos(currentBit) + offset > (long) (bgm.getDuration() + 0.5)*1000000) {
-            surfaceView.onPause();
+        if (!finishFlag && chart.bitToNanos(currentBit) + offset > (long) (bgm.getDuration() + 0.5)*1000000) {
             Intent intent = new Intent(this, Result.class);
             makeIntent(intent);
             bgm.release();
