@@ -71,9 +71,16 @@ public class EffectShape extends Shape {
          Matrix.setIdentityM(worlds[i], 0);
          Matrix.rotateM(worlds[i], 0, (float) (Math.toDegrees(rotateAngle) + start), 0, 0, 1);
 
-         colors[i][0] = Utility.judgeToInteger(judge) / 3.f;
-         colors[i][1] = Utility.judgeToInteger(judge) / 3.f;
-         colors[i][2] = Utility.judgeToInteger(judge) / 3.f;
+         if (Utility.judgeToInteger(judge) != 0) {
+            colors[i][0] = (Utility.judgeToInteger(judge) - 1) / 2.5f + .2f;
+            colors[i][1] = (Utility.judgeToInteger(judge) - 1) / 2.5f + .2f;
+            colors[i][2] = (Utility.judgeToInteger(judge) - 1) / 2.5f + .2f;
+         }
+         else {
+            colors[i][0] = 0.7f;
+            colors[i][1] = 0.f;
+            colors[i][2] = 0.f;
+         }
          colors[i][3] = 1.f - lifeRatio; //TODO
 
          Matrix.setIdentityM(texTransform[i], 0);
