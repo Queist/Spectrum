@@ -1,5 +1,5 @@
 Journey	ARForest	200	200	3,4,-1,-1
-Mystic Night	Yuusaki	130	130	2,5,-1,-1
+Mystic Night	Yuusaki	130	130	2,5,1,-1
 Tutorial	none	190	190	1,-1,-1,-1
 Chartreuse Green	t+pazolite	180	180	-1,-1,9,-1
 Eyes Of Kids	Thomas Howard Lichtenstein	134	134	-1,-1,8,-1

@@ -612,7 +612,7 @@ public class PlayScreen extends AppCompatActivity implements GLSurfaceView.Rende
 
     @Override
     public void onSurfaceCreated(GL10 gl10, EGLConfig eglConfig) {
-        GLES30.glClearColor(0.5f, 0.0f, 0.0f, 1.0f);
+        GLES30.glClearColor(0.2f, 0.6f, 0.6f, 1.0f);
         GLES30.glClearDepthf(1.f);
 
         for (Note note : queriedNotes) {
