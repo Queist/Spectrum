@@ -37,4 +37,5 @@
     <string name="defaultSync">ms</string>
     <string name="logo">Queist</string>
     <string name="trashValue">-</string>
+    <string name="loading">Download Resources...</string>
 </resources>

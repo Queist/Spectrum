@@ -3,7 +3,11 @@
     xmlns:tools="http://schemas.android.com/tools"
     package="com.game.queist.spectrum">
 
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
+
     <application
+        android:requestLegacyExternalStorage="true"
         android:hardwareAccelerated="true"
         android:allowBackup="true"
         android:icon="@mipmap/ic_launcher"
@@ -37,6 +41,8 @@
             android:screenOrientation="sensorLandscape"/>
         <activity android:name=".activities.Volume"
             android:screenOrientation="sensorLandscape"/>
+        <activity android:name=".activities.LoadingScreen"
+            android:screenOrientation="sensorLandscape" />
 
         <meta-data
             android:name="preloaded_fonts"

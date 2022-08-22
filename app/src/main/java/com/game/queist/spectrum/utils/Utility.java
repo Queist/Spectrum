@@ -6,15 +6,24 @@ import android.graphics.BlurMaskFilter;
 import android.graphics.Color;
 import android.media.MediaPlayer;
 import android.opengl.GLES30;
+import android.os.Environment;
 import android.util.Log;
+import android.util.TypedValue;
 import android.widget.Button;
 import android.widget.TextView;
 
+import com.game.queist.spectrum.R;
 import com.game.queist.spectrum.chart.EffectFlag;
 import com.game.queist.spectrum.activities.PlayScreen;
 import com.game.queist.spectrum.chart.Note;
 
 import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.FileReader;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.nio.ByteBuffer;
@@ -23,6 +32,7 @@ import java.nio.IntBuffer;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Locale;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 import androidx.annotation.Keep;
@@ -296,5 +306,49 @@ public class Utility {
         if (kind.equals(Note.AUTO)) {
             return new Note(Note.SLIDE, 90 * side, 90, bit, color);
         } else return new Note(kind, start, range, bit, color);
+    }
+
+    public static void writeFile(Context context, String fileName, String category) {
+        TypedValue value = new TypedValue();
+        int fileID = context.getResources().getIdentifier(fileName, category, context.getPackageName());
+        context.getResources().getValue(fileID, value, true);
+
+        File file = new File(value.string.toString());
+        file = new File(getExternalStoragePath(), file.getName());
+        System.out.printf("Create New File : %s\n", file.getAbsolutePath());
+        if (file.getParentFile() != null) file.getParentFile().mkdir();
+        try {
+            if (file.createNewFile()) {
+                FileOutputStream outputStream = new FileOutputStream(file, false);
+
+                InputStream inputStream = context.getResources().openRawResource(fileID);
+                byte [] buffer = new byte[512];
+                while (inputStream.read(buffer) != -1) {
+                    outputStream.write(buffer);
+                }
+                inputStream.close();
+                outputStream.close();
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    public static BufferedReader readFile(String fileName) {
+
+        File file = new File(Environment.getExternalStorageDirectory(), fileName);
+
+        try {
+            BufferedReader reader = new BufferedReader(new FileReader(file));
+            return reader;
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        }
+
+        return null;
+    }
+
+    public static String getExternalStoragePath() {
+        return Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOCUMENTS) + "/Spectrum";
     }
 }

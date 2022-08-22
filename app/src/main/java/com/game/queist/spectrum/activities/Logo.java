@@ -12,8 +12,8 @@ import android.view.WindowInsetsController;
 import android.view.WindowManager;
 import android.widget.LinearLayout;
 
+import com.game.queist.spectrum.BuildConfig;
 import com.game.queist.spectrum.R;
-import com.game.queist.spectrum.activities.StartScreen;
 
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
@@ -34,12 +34,14 @@ public class Logo extends AppCompatActivity {
             handler.postDelayed(() -> linearLayout.setAlpha((float) (250 - finalI) / 250), 750+i);
         }
         handler.postDelayed(() -> {
-            Intent intent = new Intent(this, StartScreen.class);
+            Intent intent;
+            if (BuildConfig.DEV_MODE) intent = new Intent(this, LoadingScreen.class);
+            else intent = new Intent(this, StartScreen.class);
             Bundle bundle = ActivityOptionsCompat.makeCustomAnimation(this,
                     0, 0).toBundle();
             startActivity(intent, bundle);
         }, 1000);
-        linearLayout = findViewById(R.id.logoLayout);
+        linearLayout = findViewById(R.id.loadingLayout);
 
         ViewGroup.LayoutParams params = linearLayout.getLayoutParams();
         Point size = new Point();

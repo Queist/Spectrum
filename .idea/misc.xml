@@ -3,7 +3,11 @@
   <component name="DesignSurface">
     <option name="filePathToZoomLevelMap">
       <map>
+        <entry key="..\:/Spectrum/app/src/main/res/layout/loading.xml" value="0.22864583333333333" />
+        <entry key="..\:/Spectrum/app/src/main/res/layout/logo.xml" value="0.2296875" />
         <entry key="..\:/Spectrum/app/src/main/res/layout/playscreen.xml" value="0.41938405797101447" />
+        <entry key="..\:/Spectrum/app/src/main/res/layout/resultscreen.xml" value="0.2296875" />
+        <entry key="..\:/Spectrum/app/src/main/res/layout/startscreen.xml" value="0.2296875" />
       </map>
     </option>
   </component>

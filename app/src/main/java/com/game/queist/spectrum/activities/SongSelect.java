@@ -32,6 +32,7 @@ import android.widget.ListView;
 import android.widget.SeekBar;
 import android.widget.TextView;
 
+import com.game.queist.spectrum.BuildConfig;
 import com.game.queist.spectrum.R;
 import com.game.queist.spectrum.chart.Song;
 import com.game.queist.spectrum.utils.DataManager;
@@ -451,7 +452,11 @@ public class SongSelect extends AppCompatActivity implements AbsListView.OnScrol
         songList = new ArrayList<>();
         try {
             InputStream inputStream = getResources().openRawResource(R.raw.song_list);
-            BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(inputStream, StandardCharsets.UTF_8));
+            BufferedReader bufferedReader;
+
+            if (BuildConfig.DEV_MODE) bufferedReader = Utility.readFile("song_list");
+            else bufferedReader = new BufferedReader(new InputStreamReader(inputStream, StandardCharsets.UTF_8));
+
             String readLine;
             while ((readLine = bufferedReader.readLine()) != null) {
                 System.out.println("\t\t\t"+readLine);
