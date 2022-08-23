@@ -9,8 +9,6 @@ import com.game.queist.spectrum.BuildConfig
 import androidx.core.app.ActivityOptionsCompat
 import android.os.Handler
 import android.os.Looper
-import android.view.ViewGroup
-import kotlin.math.min
 
 class Logo : BaseSpectrumActivity() {
     var handler: Handler? = null
