@@ -28,6 +28,7 @@ import com.game.queist.spectrum.chart.Chart;
 import com.game.queist.spectrum.chart.EffectFlag;
 import com.game.queist.spectrum.chart.LongNote;
 import com.game.queist.spectrum.chart.Note;
+import com.game.queist.spectrum.shape.BackgroundQuad;
 import com.game.queist.spectrum.shape.BlankingShape;
 import com.game.queist.spectrum.shape.EffectShape;
 import com.game.queist.spectrum.shape.LaneShape;
@@ -124,6 +125,7 @@ public class PlayScreen extends AppCompatActivity implements GLSurfaceView.Rende
     LaneShape laneShape;
     BlankingShape blankingShape;
     EffectShape effectShape;
+    BackgroundQuad bgShape;
 
 
     @Override
@@ -411,6 +413,7 @@ public class PlayScreen extends AppCompatActivity implements GLSurfaceView.Rende
             if (!finishFlag) bgm.pause();
             layerPause.setVisibility(View.VISIBLE);
             lockTouchEvent = true;
+            surfaceView.onPause();
         });
 
         resumeButton.setOnClickListener((view) -> {
@@ -456,7 +459,6 @@ public class PlayScreen extends AppCompatActivity implements GLSurfaceView.Rende
         if (!finishFlag) {
             pauseButton.performClick();
         }
-        surfaceView.onPause();
     }
 
     @Override
@@ -626,11 +628,13 @@ public class PlayScreen extends AppCompatActivity implements GLSurfaceView.Rende
         laneShape = new LaneShape(this, (float) RADIUS, (float) BASE_Z, (float) BLEND_RATE);
         blankingShape = new BlankingShape(this, (float) RADIUS, (float) BASE_Z, (float) BLEND_RATE);
         effectShape = new EffectShape(this, (float) OUTER, (float) RADIUS, 0.f);
+        bgShape = new BackgroundQuad(this, coverID);
 
         noteShape.initialize();
         laneShape.initialize();
         blankingShape.initialize();
         effectShape.initialize();
+        bgShape.initialize();
 
         Shape.setCamara(new float[]{0.f, 0.f, (float) CAM_Z}, new float[]{0.f, 0.f, 0.f});
         Shape.setProj(90.f, ((float) width)/height, (float) NEAR, (float) FAR);
@@ -662,7 +666,6 @@ public class PlayScreen extends AppCompatActivity implements GLSurfaceView.Rende
         GLES30.glClear(GLES30.GL_COLOR_BUFFER_BIT);
         GLES30.glClear(GLES30.GL_DEPTH_BUFFER_BIT);
 
-        /*TODO : Cull And Render Note*/
         reduceNote();
         gatherRenderObjects();
         cull();
@@ -670,6 +673,7 @@ public class PlayScreen extends AppCompatActivity implements GLSurfaceView.Rende
         blankingShape.draw();
         effectShape.draw(effectFlags.size(), effectFlags);
         noteShape.draw(screenNotes.size(), screenNotes, getZ(), rotateAngle);
+        bgShape.draw();
     }
 
     private void reduceNote() {

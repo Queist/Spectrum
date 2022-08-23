@@ -43,7 +43,7 @@ public class NoteShape extends Shape {
 
       createTexture(Note.TAB, R.drawable.tab_note_texture);
       createTexture(Note.SLIDE, R.drawable.slide_note_texture);
-      createTexture(Note.LONG, R.drawable.note_v2);
+      createTexture(Note.LONG, R.drawable.long_note_texture);
    }
 
    @Override
@@ -73,7 +73,7 @@ public class NoteShape extends Shape {
          if (notes.get(i).getKind().equals(Note.LONG)) {
             LongNote longNote = (LongNote) notes.get(i);
             Matrix.translateM(worlds[i], 0, 0, 0, (float) (z[i] + longNote.getWorldWidth()/2 - thickness/2));
-            Matrix.scaleM(worlds[i], 0, 0, 0, (float) (longNote.getWorldWidth() / thickness));
+            Matrix.scaleM(worlds[i], 0, 1, 1, (float) (longNote.getWorldWidth() / thickness));
          }
          else Matrix.translateM(worlds[i], 0, 0, 0, (float) z[i]);
 

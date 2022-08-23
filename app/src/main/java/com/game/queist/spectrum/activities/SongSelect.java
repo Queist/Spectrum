@@ -454,8 +454,8 @@ public class SongSelect extends AppCompatActivity implements AbsListView.OnScrol
             InputStream inputStream = getResources().openRawResource(R.raw.song_list);
             BufferedReader bufferedReader;
 
-            if (BuildConfig.DEV_MODE) bufferedReader = Utility.readFile("song_list");
-            else bufferedReader = new BufferedReader(new InputStreamReader(inputStream, StandardCharsets.UTF_8));
+            /*if (BuildConfig.DEV_MODE) bufferedReader = Utility.readFile("song_list");
+            else*/ bufferedReader = new BufferedReader(new InputStreamReader(inputStream, StandardCharsets.UTF_8));
 
             String readLine;
             while ((readLine = bufferedReader.readLine()) != null) {

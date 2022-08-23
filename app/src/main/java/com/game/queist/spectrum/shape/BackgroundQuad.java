@@ -9,6 +9,7 @@ public class BackgroundQuad extends Shape {
    public BackgroundQuad(Context context, int resourceID) {
       super(context);
       this.resourceID = resourceID;
+      setMaterial(0f, new float[]{0f, 0f, 0f});
    }
 
    @Override
@@ -41,9 +42,9 @@ public class BackgroundQuad extends Shape {
    }
 
    @Override
-   protected void initShader() { //TODO
-      setVertexShader("note_v");
-      setFragmentShader("note_f");
+   protected void initShader() {
+      setVertexShader("quad_v");
+      setFragmentShader("quad_f");
    }
 
    public void draw() {

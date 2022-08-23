@@ -64,4 +64,5 @@ void main() {
     result = result + 0.2 * finalColor.xyz;
     result = (result + 3.0 * finalColor.xyz) / 4.0;
     fragColor = vec4(result, finalColor.a);
+    gl_FragDepth = floor(gl_FragCoord.z * 16.0) / 16.0;
 }
