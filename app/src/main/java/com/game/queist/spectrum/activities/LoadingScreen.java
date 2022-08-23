@@ -11,7 +11,6 @@ import android.widget.ImageView;
 import android.widget.LinearLayout;
 
 import com.bumptech.glide.Glide;
-import com.game.queist.spectrum.BuildConfig;
 import com.game.queist.spectrum.R;
 import com.game.queist.spectrum.chart.Song;
 import com.game.queist.spectrum.utils.Utility;
@@ -26,8 +25,6 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
-
-import com.game.queist.spectrum.activities.SongSelect;
 
 public class LoadingScreen extends AppCompatActivity {
 
@@ -100,6 +97,8 @@ public class LoadingScreen extends AppCompatActivity {
                         }
                         return null;
                     }
+
+
                 };
 
                 asyncTask.execute(this);
