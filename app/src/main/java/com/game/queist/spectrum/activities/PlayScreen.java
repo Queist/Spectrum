@@ -24,10 +24,13 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import com.game.queist.spectrum.R;
+import com.game.queist.spectrum.chart.BitObject;
 import com.game.queist.spectrum.chart.Chart;
 import com.game.queist.spectrum.chart.EffectFlag;
+import com.game.queist.spectrum.chart.EquivalenceLine;
 import com.game.queist.spectrum.chart.LongNote;
 import com.game.queist.spectrum.chart.Note;
+import com.game.queist.spectrum.chart.RotateSpeed;
 import com.game.queist.spectrum.shape.BackgroundQuad;
 import com.game.queist.spectrum.shape.BlankingShape;
 import com.game.queist.spectrum.shape.EffectShape;
@@ -63,6 +66,9 @@ public class PlayScreen extends AppCompatActivity implements GLSurfaceView.Rende
     public final static String BAD = "BAD";
     public final static String GOOD = "GOOD";
     public final static String PERFECT = "PERFECT";
+
+    public final static String SPEED_UP = "SpeedUp";
+    public final static String SPEED_DOWN = "SpeedDown";
 
     public final static double NEAR = 10.5;
     public final static double FAR = 1000.0;
@@ -106,15 +112,18 @@ public class PlayScreen extends AppCompatActivity implements GLSurfaceView.Rende
 
     private double rotateAngle;
     double[] baseAngle;
+    LongNote[] pressedLongNotes;
     int dominantIndex;
     private boolean isRollBack;
-    private double rollBackTime;
+    private double rollBackBit;
 
     ArrayList<Note> queriedNotes;
     ArrayList<Note> screenNotes;
     LinkedList<Note> deleteQueue;
-    ArrayList<Double> queriedLines;
-    ArrayList<Double> screenLines;
+    ArrayList<EquivalenceLine> queriedLines;
+    ArrayList<EquivalenceLine> screenLines;
+    ArrayList<RotateSpeed> queriedRotateSpeeds;
+    ArrayList<RotateSpeed> screenRotateSpeeds;
     ArrayList<EffectFlag> effectFlags = new ArrayList<>();
     LinkedList<EffectFlag> effectQueue;
 
@@ -148,7 +157,7 @@ public class PlayScreen extends AppCompatActivity implements GLSurfaceView.Rende
                 dominantIndex = pointerId;
                 double cw = angle - baseAngle[pointerId];
                 double ccw = cw > 0 ? cw - 2 * Math.PI : cw + 2 * Math.PI;
-                rotateAngle += Math.abs(cw) <= Math.abs(ccw) ? cw : ccw;
+                rotateAngle -= Math.abs(cw) <= Math.abs(ccw) ? cw : ccw;
                 baseAngle[pointerId] = angle;
             }
         } else if (ev.getActionMasked() == MotionEvent.ACTION_UP || ev.getActionMasked() == MotionEvent.ACTION_POINTER_UP) {
@@ -157,8 +166,9 @@ public class PlayScreen extends AppCompatActivity implements GLSurfaceView.Rende
                 isRollBack = true;
                 ArrayList<Note> nearestNotes = Utility.getNextNotes(screenNotes);
                 double nearestNoteTime = nearestNotes.isEmpty() ? 0.5 : (chart.bitToNanos(nearestNotes.get(0).getBit()) - chart.bitToNanos(currentBit)) / 1000000000.0;
-                rollBackTime = Math.min(nearestNoteTime, 0.5);
+                rollBackBit = chart.getCurrentRotateSpeed(currentBit);
             }
+            if (pressedLongNotes[pointerId] != null) pressedLongNotes[pointerId].setPressed(false);
         }
         return super.dispatchTouchEvent(ev);
     }
@@ -169,7 +179,12 @@ public class PlayScreen extends AppCompatActivity implements GLSurfaceView.Rende
             for (Note note : notes) {
                 if (touchedCorrectly(note, angle)) {
                     if (note.getKind().equals(Note.TAB)) {
-                        makeTabNoteJudge(note);
+                        makeTabNoteJudge(note, true);
+                    }
+                    else if (note.getKind().equals(Note.LONG)) {
+                        pressedLongNotes[pointerID] = (LongNote) note;
+                        pressedLongNotes[pointerID].setPressed(true);
+                        makeTabNoteJudge(note, false);
                     }
                 }
             }
@@ -233,7 +248,7 @@ public class PlayScreen extends AppCompatActivity implements GLSurfaceView.Rende
         return result;
     }
 
-    private void makeTabNoteJudge(Note note) {
+    private void makeTabNoteJudge(Note note, boolean toRemove) {
         double diff = chart.bitToNanos(note.getBit()) - chart.bitToNanos(currentBit);
         if (Math.abs(diff) <= AWARE_TIME * 1000000) {
             if (Math.abs(diff) > JUDGE_TIME_BAD * 1000000) {
@@ -253,7 +268,7 @@ public class PlayScreen extends AppCompatActivity implements GLSurfaceView.Rende
                     makeJudgeEffect(note, BAD);
                 }
             }
-            deleteQueue.addLast(note);
+            if (toRemove) deleteQueue.addLast(note);
         }
     }
 
@@ -272,6 +287,10 @@ public class PlayScreen extends AppCompatActivity implements GLSurfaceView.Rende
 
             if (!dontRemove) deleteQueue.addLast(note);
         }
+    }
+
+    private boolean checkLongNoteUphold(LongNote longNote) {
+        return longNote.isPressed() && matchColor(longNote);
     }
 
 
@@ -338,8 +357,10 @@ public class PlayScreen extends AppCompatActivity implements GLSurfaceView.Rende
         difficultyView = findViewById(R.id.difficultyView);
         songNameText = findViewById(R.id.songNameText);
         comboNameText = findViewById(R.id.comboNameText);
+
         difficultyView.setBackgroundColor(Utility.difficultyToColor(difficulty));
         songNameText.setText(songName);
+
         ViewGroup.LayoutParams params = frameLayoutPlay.getLayoutParams();
         Point size = new Point();
         getWindowManager().getDefaultDisplay().getRealSize(size);
@@ -391,12 +412,15 @@ public class PlayScreen extends AppCompatActivity implements GLSurfaceView.Rende
 
         queriedNotes = chart.getNotes();
         queriedLines = chart.getEquivalenceLines();
+        queriedRotateSpeeds = chart.getRotateSpeeds();
         totalNotes = chart.getTotalNotes();
         screenLines = new ArrayList<>();
         screenNotes = new ArrayList<>();
+        screenRotateSpeeds = new ArrayList<>();
         deleteQueue = new LinkedList<>();
 
         baseAngle = new double[10];
+        pressedLongNotes = new LongNote[10];
         rotateAngle = 0;
         isRollBack = false;
 
@@ -522,14 +546,15 @@ public class PlayScreen extends AppCompatActivity implements GLSurfaceView.Rende
         time = System.nanoTime();
 
 
+        double prevBit = currentBit;
         currentBit = chart.nanosToBit((long) (chart.bitToNanos(currentBit) + tick));
 
         if (isRollBack) {
-            rotateAngle -= rotateAngle * tickSeconds / rollBackTime;
-            rollBackTime -= tickSeconds;
-            if (rollBackTime <= 0) {
+            rotateAngle -= rotateAngle * (currentBit - prevBit) / rollBackBit;
+            rollBackBit -= (currentBit - prevBit);
+            if (rollBackBit <= 0) {
                 rotateAngle = 0;
-                rollBackTime = 0;
+                rollBackBit = 0;
                 isRollBack = false;
             }
         }
@@ -671,15 +696,33 @@ public class PlayScreen extends AppCompatActivity implements GLSurfaceView.Rende
         cull();
         laneShape.draw();
         blankingShape.draw();
-        effectShape.draw(effectFlags.size(), effectFlags);
-        noteShape.draw(screenNotes.size(), screenNotes, getZ(), rotateAngle);
         bgShape.draw();
+
+        noteShape.draw(screenLines.size(), getZ(screenLines));
+        noteShape.draw(screenRotateSpeeds.size(), getRotateSpeedDiff(screenRotateSpeeds), getZ(screenRotateSpeeds));
+        noteShape.draw(screenNotes.size(), screenNotes, getZ(), rotateAngle);
+        effectShape.draw(effectFlags.size(), effectFlags);
+    }
+
+    private String[] getRotateSpeedDiff(ArrayList<RotateSpeed> screenRotateSpeeds) {
+        String[] diff = new String[screenRotateSpeeds.size()];
+        for (int i = 0; i < screenRotateSpeeds.size(); i++) {
+            RotateSpeed rotateSpeed = screenRotateSpeeds.get(i);
+            RotateSpeed prevSpeed = queriedRotateSpeeds.get(queriedRotateSpeeds.indexOf(rotateSpeed) - 1);
+            if (rotateSpeed.getValue() > prevSpeed.getValue()) diff[i] = SPEED_UP;
+            else diff[i] = SPEED_DOWN;
+        }
+        return diff;
     }
 
     private void reduceNote() {
         for (Note note: screenNotes) {
             if (note.getKind().equals(Note.SLIDE)) makeSlideNoteJudge(note);
-            if (note.getKind().equals(Note.TAB) &&
+            if (note.getKind().equals(Note.LONG) && ((LongNote) note).getEndBit() < currentBit && checkLongNoteUphold((LongNote) note)) {
+                makeJudgeEffect(note, PERFECT);
+                deleteQueue.add(note);
+            }
+            if ((note.getKind().equals(Note.TAB) || (note.getKind().equals(Note.LONG) && !checkLongNoteUphold((LongNote) note))) &&
                     chart.bitToNanos(note.getBit()) - chart.bitToNanos(currentBit) < -JUDGE_TIME_BAD * 1000000) {
                 makeJudgeEffect(note, MISS);
                 deleteQueue.add(note);
@@ -703,16 +746,25 @@ public class PlayScreen extends AppCompatActivity implements GLSurfaceView.Rende
     }
 
     private void cull() {
-        for (Iterator<Double> iterator = queriedLines.iterator(); iterator.hasNext();) {
-            double bit = iterator.next();
-            if (bit - bitInScreen < currentBit ) {
+        for (Iterator<EquivalenceLine> iterator = queriedLines.iterator(); iterator.hasNext();) {
+            EquivalenceLine bit = iterator.next();
+            if (bit.getBit() - bitInScreen < currentBit ) {
                 screenLines.add(bit);
                 iterator.remove();
             }
             else break;
         }
 
-        screenLines.removeIf(bit -> chart.bitToNanos(currentBit) > chart.bitToNanos(bit));
+        screenLines.removeIf(equivalenceLine -> currentBit - bitInScreen > equivalenceLine.getBit());
+
+        screenRotateSpeeds.clear();
+
+        for (RotateSpeed queriedRotateSpeed : queriedRotateSpeeds) {
+            RotateSpeed rotateSpeed = queriedRotateSpeed;
+            if (rotateSpeed.getBit() - bitInScreen < currentBit && currentBit <= rotateSpeed.getBit() + bitInScreen) {
+                screenRotateSpeeds.add(rotateSpeed);
+            }
+        }
 
         for (Iterator<Note> iterator = queriedNotes.iterator(); iterator.hasNext();) {
             Note note = iterator.next();
@@ -738,6 +790,15 @@ public class PlayScreen extends AppCompatActivity implements GLSurfaceView.Rende
             else {
                 z[i] = (note.getBit() - currentBit) / bitInScreen * BASE_Z;
             }
+        }
+        return z;
+    }
+
+    private <T extends BitObject> double[] getZ(ArrayList<T> bitObjects) {
+        double[] z = new double[bitObjects.size()];
+        for (int i = 0; i < bitObjects.size(); i++) {
+            BitObject bitObject = bitObjects.get(i);
+            z[i] = (bitObject.getBit() - currentBit) / bitInScreen * BASE_Z;
         }
         return z;
     }

@@ -3,6 +3,8 @@ package com.game.queist.spectrum.chart;
 public class LongNote extends Note {
     private double endBit;
 
+    private boolean isPressed;
+
     public double getWorldWidth() {
         return worldWidth;
     }
@@ -20,5 +22,13 @@ public class LongNote extends Note {
 
     public double getEndBit() {
         return endBit;
+    }
+
+    public boolean isPressed() {
+        return isPressed;
+    }
+
+    public void setPressed(boolean pressed) {
+        isPressed = pressed;
     }
 }

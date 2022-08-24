@@ -3,6 +3,7 @@ package com.game.queist.spectrum.shape;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.opengl.GLES20;
 import android.opengl.GLES30;
 import android.opengl.GLUtils;
 import android.opengl.Matrix;
@@ -266,6 +267,7 @@ public abstract class Shape {
         GLES30.glEnable(GLES30.GL_DEPTH_TEST);
         GLES30.glEnable(GLES30.GL_POLYGON_OFFSET_FILL);
         GLES30.glDepthFunc(GLES30.GL_LEQUAL);
+        GLES30.glEnable(GLES30.GL_SAMPLE_ALPHA_TO_COVERAGE);
 
         GLES30.glEnable(GLES30.GL_BLEND);
         GLES30.glBlendFunc(GLES30.GL_SRC_ALPHA, GLES30.GL_ONE_MINUS_SRC_ALPHA);
@@ -299,8 +301,8 @@ public abstract class Shape {
         GLES30.glBindTexture(GLES30.GL_TEXTURE_2D, textureID[0]);
         Bitmap texture = BitmapFactory.decodeResource(context.getResources(), resourceID);
         GLUtils.texImage2D(GLES30.GL_TEXTURE_2D, 0, texture, 0);
-        GLES30.glTexParameteri(GLES30.GL_TEXTURE_2D, GLES30.GL_TEXTURE_MIN_FILTER, GLES30.GL_LINEAR_MIPMAP_LINEAR);
-        GLES30.glTexParameteri(GLES30.GL_TEXTURE_2D, GLES30.GL_TEXTURE_MAG_FILTER, GLES30.GL_LINEAR);
+        GLES30.glTexParameteri(GLES30.GL_TEXTURE_2D, GLES30.GL_TEXTURE_MIN_FILTER, GLES30.GL_NEAREST);
+        GLES30.glTexParameteri(GLES30.GL_TEXTURE_2D, GLES30.GL_TEXTURE_MAG_FILTER, GLES30.GL_NEAREST);
         GLES30.glGenerateMipmap(GLES30.GL_TEXTURE_2D);
     }
 }

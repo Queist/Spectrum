@@ -32,11 +32,13 @@ import java.util.Comparator;
 public class Chart {
 
     private ArrayList<Note> notes;
-    private ArrayList<Pair<Integer, Double>> helper;
-    private ArrayList<Double> equivalenceLines;
+    private ArrayList<Pair<Double, Double>> helper;
+    private ArrayList<RotateSpeed> rotateSpeeds;
+    private ArrayList<EquivalenceLine> equivalenceLines;
     private ArrayList<BPM> bpms;
     private int totalNotes;
     private int offset;
+    private boolean isLegacy;
     static Comparator<BitObject> sortToBit = (b1, b2) -> Double.compare(b1.getBit(), b2.getBit());
 
     public Chart(InputStream chartFile) {
@@ -45,6 +47,7 @@ public class Chart {
         bpms = new ArrayList<>();
         helper = new ArrayList<>();
         equivalenceLines = new ArrayList<>();
+        rotateSpeeds = new ArrayList<>();
         offset = 0;
         readChart(chartFile);
     }
@@ -54,13 +57,17 @@ public class Chart {
             BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(chartFile, StandardCharsets.UTF_8));
             String readLine;
             readLine = bufferedReader.readLine();
-            String[] hAttr =readLine.split("\t");
+            String[] hAttr = readLine.split("\t");
             if (!(hAttr[0].equals("Header") && hAttr[1].equals("Spectrum"))) {
                 throw new Exception("Error in Parsing Spectrum Chart Header");
             }
+            isLegacy = hAttr[2].equals("Legacy");
+
+            rotateSpeeds.add(new RotateSpeed(1.0, -100000.0));
 
             while ((readLine = bufferedReader.readLine()) != null) {
                 String[] attr = readLine.split("\t");
+                System.out.println(attr[0]);
                 switch (attr[0]) {
                     case "Offset":
                         offset = Integer.parseInt(attr[1]);
@@ -71,12 +78,13 @@ public class Chart {
                         break;
 
                     case "Note":
-                        Integer side = Integer.parseInt(attr[2]);
+                        Double meanPos = isLegacy ?
+                                Double.parseDouble(attr[2]) : (Double.parseDouble(attr[2]) + Double.parseDouble(attr[3]))/2;
                         Note note;
                         if (!checkNoteKind(attr[1])) {
                             throw new Exception("Error in Parsing Spectrum Chart Body");
                         }
-                        if (hAttr[2].equals("Legacy")) {
+                        if (isLegacy) {
                             note = Utility.getNoteFromLegacyFormat(
                                     attr[1],
                                     Integer.parseInt(attr[2]),
@@ -84,6 +92,7 @@ public class Chart {
                                     Double.parseDouble(attr[4]),
                                     Double.parseDouble(attr[5]),
                                     Integer.parseInt(attr[6]));
+                            totalNotes += 1;
                         }
                         else {
                             if (attr[1].equals(Note.LONG)) {
@@ -93,6 +102,7 @@ public class Chart {
                                         Double.parseDouble(attr[4]),
                                         Integer.parseInt(attr[5]),
                                         Double.parseDouble(attr[6]));
+                                totalNotes += 2;
                             }
                             else {
                                 note = new Note(attr[1],
@@ -100,11 +110,17 @@ public class Chart {
                                     Double.parseDouble(attr[3]),
                                     Double.parseDouble(attr[4]),
                                     Integer.parseInt(attr[5]));
+                                totalNotes += 1;
                             }
                         }
                         notes.add(note);
                         if (note.getKind().equals(Note.TAB) || note.getKind().equals(Note.LONG))
-                            helper.add(new Pair<>(side, note.getBit()));
+                            helper.add(new Pair<>(meanPos, note.getBit()));
+                        break;
+
+                    case "Rotate":
+                        if (rotateSpeeds.get(rotateSpeeds.size() - 1).getValue() != Double.parseDouble(attr[1]))
+                            rotateSpeeds.add(new RotateSpeed(Double.parseDouble(attr[1]), Double.parseDouble(attr[2])));
                         break;
 
                     default:
@@ -116,16 +132,24 @@ public class Chart {
             e.printStackTrace();
         } finally {
             double recentBit = -8000;
-            int recentSide = -1;
-            totalNotes += notes.size();
+            double recentMeanPos = -1;
             for (int i = 0; i < helper.size(); i++) {
                 if (recentBit != helper.get(i).second) {
                     recentBit = helper.get(i).second;
-                    recentSide = helper.get(i).first;
+                    recentMeanPos = helper.get(i).first;
                 }
-                else if (recentSide != helper.get(i).first && (equivalenceLines.isEmpty() ||
-                        equivalenceLines.get(equivalenceLines.size() -1) != recentBit))
-                    equivalenceLines.add(recentBit);
+                else if (isLegacy) {
+                    if (recentMeanPos != helper.get(i).first && (equivalenceLines.isEmpty() ||
+                            equivalenceLines.get(equivalenceLines.size() - 1).getBit() != recentBit))
+                        equivalenceLines.add(new EquivalenceLine(recentBit));
+                }
+                else {
+                    double mult = Math.floor((recentMeanPos - helper.get(i).first) / 360.0);
+                    double diff = recentMeanPos - helper.get(i).first - mult * 360.0;
+                    if ((diff < 90.0 || diff > 270.0) && (equivalenceLines.isEmpty() ||
+                            equivalenceLines.get(equivalenceLines.size() - 1).getBit() != recentBit))
+                        equivalenceLines.add(new EquivalenceLine(recentBit));
+                }
             }
         }
 
@@ -133,7 +157,7 @@ public class Chart {
 
     public int getTotalNotes() { return totalNotes; }
 
-    public ArrayList<Double> getEquivalenceLines() { return equivalenceLines; }
+    public ArrayList<EquivalenceLine> getEquivalenceLines() { return equivalenceLines; }
 
     public double bitToNanos(double bit) {
         double time = 0;
@@ -154,7 +178,23 @@ public class Chart {
         return time;
     }
 
+    public double getCurrentRotateSpeed(double bit) {
+        if (bit <= 0) {
+            return rotateSpeeds.get(0).getValue();
+        }
+        for (int i=0; i<rotateSpeeds.size(); i++) {
+            if (rotateSpeeds.get(i).getBit() > bit) {
+                return rotateSpeeds.get(i-1).getValue();
+            }
+        }
+        return 1;
+    }
+
     public ArrayList<Note> getNotes() { return notes; }
+
+    public ArrayList<RotateSpeed> getRotateSpeeds() {
+        return rotateSpeeds;
+    }
 
     public double getCurrentBPM (double bit) {
         if (bit <= 0) {
