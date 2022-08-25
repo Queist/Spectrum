@@ -3,12 +3,21 @@ package com.game.queist.spectrum.shape;
 import android.content.Context;
 import android.opengl.Matrix;
 
+import com.game.queist.spectrum.BuildConfig;
+
 public class BackgroundQuad extends Shape {
    private int resourceID;
+   private String resourcePath;
 
    public BackgroundQuad(Context context, int resourceID) {
       super(context);
       this.resourceID = resourceID;
+      setMaterial(0f, new float[]{0f, 0f, 0f});
+   }
+
+   public BackgroundQuad(Context context, String resourcePath) {
+      super(context);
+      this.resourcePath = resourcePath;
       setMaterial(0f, new float[]{0f, 0f, 0f});
    }
 
@@ -38,7 +47,8 @@ public class BackgroundQuad extends Shape {
               2, 0, 3,
       };
 
-      createTexture("Background", resourceID);
+      if (BuildConfig.DEV_MODE) createTexture("Background", resourcePath);
+      else createTexture("Background", resourceID);
    }
 
    @Override

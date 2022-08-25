@@ -12,7 +12,6 @@ import android.util.TypedValue;
 import android.widget.Button;
 import android.widget.TextView;
 
-import com.game.queist.spectrum.R;
 import com.game.queist.spectrum.chart.EffectFlag;
 import com.game.queist.spectrum.activities.PlayScreen;
 import com.game.queist.spectrum.chart.Note;
@@ -22,8 +21,6 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.FileReader;
-import java.io.FileWriter;
-import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.nio.ByteBuffer;
@@ -32,10 +29,7 @@ import java.nio.IntBuffer;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Locale;
-import java.util.Objects;
 import java.util.stream.Collectors;
-
-import androidx.annotation.Keep;
 
 public class Utility {
     public static double screenRate = 0;
@@ -336,7 +330,7 @@ public class Utility {
 
     public static BufferedReader readFile(String fileName) {
 
-        File file = new File(Environment.getExternalStorageDirectory(), fileName);
+        File file = getExternalStorageFile(fileName);
 
         try {
             BufferedReader reader = new BufferedReader(new FileReader(file));
@@ -350,5 +344,33 @@ public class Utility {
 
     public static String getExternalStoragePath() {
         return Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOCUMENTS) + "/Spectrum";
+    }
+
+    public static File getExternalStorageFile(String name) {
+        return new File(getExternalStoragePath(), name);
+    }
+
+    public static File getExternalStorageFile(String name, String type) throws FileNotFoundException {
+        File file;
+        switch (type) {
+            case "image" :
+                file = new File(getExternalStoragePath(), name + ".png");
+                if (file.exists()) return file;
+                else file = new File(getExternalStoragePath(), name + ".jpg");
+                if (file.exists()) return file;
+                else throw new FileNotFoundException("There are no thumbnail for song.");
+            case "chart" :
+                file = new File(getExternalStoragePath(), name + ".txt");
+                if (file.exists()) return file;
+                else throw new FileNotFoundException("There are no chart file for song.");
+            case "music" :
+                file = new File(getExternalStoragePath(), name + ".mp3");
+                if (file.exists()) return file;
+                else file = new File(getExternalStoragePath(), name + ".wav");
+                if (file.exists()) return file;
+                else throw new FileNotFoundException("There are no such song.");
+            default:
+                throw new FileNotFoundException("Cannot parse file type.");
+        }
     }
 }

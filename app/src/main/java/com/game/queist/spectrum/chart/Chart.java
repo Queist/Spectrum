@@ -52,9 +52,24 @@ public class Chart {
         readChart(chartFile);
     }
 
+    public Chart(BufferedReader chartFile) {
+        totalNotes = 0;
+        notes = new ArrayList<>();
+        bpms = new ArrayList<>();
+        helper = new ArrayList<>();
+        equivalenceLines = new ArrayList<>();
+        rotateSpeeds = new ArrayList<>();
+        offset = 0;
+        readChart(chartFile);
+    }
+
     private void readChart(InputStream chartFile) {
+        BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(chartFile, StandardCharsets.UTF_8));
+        readChart(bufferedReader);
+    }
+
+    private void readChart(BufferedReader bufferedReader) {
         try {
-            BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(chartFile, StandardCharsets.UTF_8));
             String readLine;
             readLine = bufferedReader.readLine();
             String[] hAttr = readLine.split("\t");
@@ -106,10 +121,10 @@ public class Chart {
                             }
                             else {
                                 note = new Note(attr[1],
-                                    Double.parseDouble(attr[2]),
-                                    Double.parseDouble(attr[3]),
-                                    Double.parseDouble(attr[4]),
-                                    Integer.parseInt(attr[5]));
+                                        Double.parseDouble(attr[2]),
+                                        Double.parseDouble(attr[3]),
+                                        Double.parseDouble(attr[4]),
+                                        Integer.parseInt(attr[5]));
                                 totalNotes += 1;
                             }
                         }
@@ -152,7 +167,6 @@ public class Chart {
                 }
             }
         }
-
     }
 
     public int getTotalNotes() { return totalNotes; }

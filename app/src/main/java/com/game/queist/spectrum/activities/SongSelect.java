@@ -6,6 +6,7 @@ import android.content.Intent;
 import android.graphics.Color;
 import android.graphics.Point;
 import android.media.MediaPlayer;
+import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import androidx.annotation.NonNull;
@@ -39,6 +40,7 @@ import com.game.queist.spectrum.utils.DataManager;
 import com.game.queist.spectrum.utils.Utility;
 
 import java.io.BufferedReader;
+import java.io.FileNotFoundException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
@@ -241,7 +243,11 @@ public class SongSelect extends AppCompatActivity implements AbsListView.OnScrol
         }
 
         nameListView.setSelection(songList.size() * (500000/songList.size()));
-        init((Song) nameListView.getItemAtPosition(nameListView.getFirstVisiblePosition()+VIEW_NUM/2));
+        try {
+            init((Song) nameListView.getItemAtPosition(nameListView.getFirstVisiblePosition()+VIEW_NUM/2));
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        }
 
         start.setOnClickListener((view) -> {
             int select = currentSong.getCurrentDiff();
@@ -336,9 +342,13 @@ public class SongSelect extends AppCompatActivity implements AbsListView.OnScrol
         }
     }
 
-    private void init(Song song) {
+    private void init(Song song) throws FileNotFoundException {
         currentSong = song;
-        thumbSound = MediaPlayer.create(this, currentSong.getThumbID());
+        if (BuildConfig.DEV_MODE) {
+            thumbSound = MediaPlayer.create(this,
+                    Uri.fromFile(Utility.getExternalStorageFile(currentSong.getName().replace(" ", "_").toLowerCase() + "_thumb", "music")));
+        }
+        else thumbSound = MediaPlayer.create(this, currentSong.getThumbID());
         float volume = DataManager.getData(this).getMusicVolume();
         thumbSound.setVolume(volume, volume);
         thumbSound.setOnCompletionListener(MediaPlayer::start);
@@ -454,8 +464,8 @@ public class SongSelect extends AppCompatActivity implements AbsListView.OnScrol
             InputStream inputStream = getResources().openRawResource(R.raw.song_list);
             BufferedReader bufferedReader;
 
-            /*if (BuildConfig.DEV_MODE) bufferedReader = Utility.readFile("song_list");
-            else*/ bufferedReader = new BufferedReader(new InputStreamReader(inputStream, StandardCharsets.UTF_8));
+            if (BuildConfig.DEV_MODE) bufferedReader = Utility.readFile("song_list.txt");
+            else bufferedReader = new BufferedReader(new InputStreamReader(inputStream, StandardCharsets.UTF_8));
 
             String readLine;
             while ((readLine = bufferedReader.readLine()) != null) {
@@ -464,8 +474,12 @@ public class SongSelect extends AppCompatActivity implements AbsListView.OnScrol
                 String[] difficultyValue = attr[4].split(",");
                 int[] difficulty = new int[DIFF_NUM];
                 for (int i = 0; i < DIFF_NUM; i++) difficulty[i] = Integer.parseInt(difficultyValue[i]);
-                int coverID = this.getResources().getIdentifier(attr[0].replace(" ","_").toLowerCase(), "drawable", this.getPackageName());
-                int thumbID = this.getResources().getIdentifier(attr[0].replace(" ","_").toLowerCase() + "_thumb", "raw", this.getPackageName());
+                int coverID = -1;
+                int thumbID = -1;
+                if (!BuildConfig.DEV_MODE) {
+                    coverID = this.getResources().getIdentifier(attr[0].replace(" ", "_").toLowerCase(), "drawable", this.getPackageName());
+                    thumbID = this.getResources().getIdentifier(attr[0].replace(" ", "_").toLowerCase() + "_thumb", "raw", this.getPackageName());
+                }
                 songList.add(new Song(attr[0], attr[1], coverID, thumbID, Double.parseDouble(attr[2]), Double.parseDouble(attr[3]), difficulty));
             }
             return songList;
@@ -508,7 +522,11 @@ public class SongSelect extends AppCompatActivity implements AbsListView.OnScrol
                 absListView.scrollListBy(absListView.getChildAt(0).getHeight() + absListView.getChildAt(0).getTop());
                 onScroll(absListView, absListView.getFirstVisiblePosition(), 3, absListView.getCount());
             }*/
-            init((Song) absListView.getItemAtPosition(index+VIEW_NUM/2));
+            try {
+                init((Song) absListView.getItemAtPosition(index+VIEW_NUM/2));
+            } catch (FileNotFoundException e) {
+                e.printStackTrace();
+            }
             layerInfo.setVisibility(View.VISIBLE);
             layerInfo2.setVisibility(View.VISIBLE);
             isWaitForStart = false;
@@ -620,9 +638,14 @@ class SelectionAdaptor extends BaseAdapter {
         FrameLayout.LayoutParams myParams = new FrameLayout.LayoutParams(params);
         songListFrameLayout.setLayoutParams(myParams);
         cover.setLayoutParams(new FrameLayout.LayoutParams(ViewGroup.MarginLayoutParams.MATCH_PARENT, ViewGroup.MarginLayoutParams.MATCH_PARENT));
-        System.out.println("\t\t\t?!?!?!?!"+cover.getWidth());
-        System.out.println("\t\t\t?!?!?!?!?!?!?!"+params.width);
-        cover.setImageResource(song.getCoverID());
+        if (BuildConfig.DEV_MODE) {
+            try {
+                cover.setImageURI(Uri.fromFile(Utility.getExternalStorageFile(song.getName().replace(" ", "_").toLowerCase(), "image")));
+            } catch (FileNotFoundException e) {
+                e.printStackTrace();
+            }
+        }
+        else cover.setImageResource(song.getCoverID());
         cover.setScaleType(ImageView.ScaleType.FIT_CENTER);
         return view;
     }

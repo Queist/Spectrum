@@ -305,4 +305,18 @@ public abstract class Shape {
         GLES30.glTexParameteri(GLES30.GL_TEXTURE_2D, GLES30.GL_TEXTURE_MAG_FILTER, GLES30.GL_NEAREST);
         GLES30.glGenerateMipmap(GLES30.GL_TEXTURE_2D);
     }
+
+    protected void createTexture(String textureName, String fileName) {
+        int[] textureID = new int[1];
+        GLES30.glGenTextures(1, textureID, 0);
+        textureMap.put(textureName, textureID[0]);
+
+        GLES30.glActiveTexture(textureID[0]);
+        GLES30.glBindTexture(GLES30.GL_TEXTURE_2D, textureID[0]);
+        Bitmap texture = BitmapFactory.decodeFile(fileName);
+        GLUtils.texImage2D(GLES30.GL_TEXTURE_2D, 0, texture, 0);
+        GLES30.glTexParameteri(GLES30.GL_TEXTURE_2D, GLES30.GL_TEXTURE_MIN_FILTER, GLES30.GL_NEAREST);
+        GLES30.glTexParameteri(GLES30.GL_TEXTURE_2D, GLES30.GL_TEXTURE_MAG_FILTER, GLES30.GL_NEAREST);
+        GLES30.glGenerateMipmap(GLES30.GL_TEXTURE_2D);
+    }
 }

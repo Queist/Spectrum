@@ -3,6 +3,7 @@ package com.game.queist.spectrum.activities;
 import android.content.Intent;
 import android.graphics.Point;
 import android.media.MediaPlayer;
+import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
@@ -18,10 +19,12 @@ import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
+import com.game.queist.spectrum.BuildConfig;
 import com.game.queist.spectrum.R;
 import com.game.queist.spectrum.utils.DataManager;
 import com.game.queist.spectrum.utils.Utility;
 
+import java.io.FileNotFoundException;
 import java.util.Locale;
 
 import androidx.annotation.Nullable;
@@ -142,7 +145,14 @@ public class Result extends AppCompatActivity {
         ID = getResources().getIdentifier("result_"+ Utility.scoreToRank(score), "drawable", this.getPackageName());
         System.out.println("\t\t\t"+Utility.scoreToRank(score));
         resultRank.setImageResource(ID);
-        resultCover.setImageResource(coverID);
+        if (BuildConfig.DEV_MODE) {
+            try {
+                resultCover.setImageURI(Uri.fromFile(Utility.getExternalStorageFile(songName.replace(" ", "_").toLowerCase(), "image")));
+            } catch (FileNotFoundException e) {
+                e.printStackTrace();
+            }
+        }
+        else resultCover.setImageResource(coverID);
         resultComboText.setText(String.format(Locale.US,"%04d",intent.getIntExtra("combo",0)));
         resultPerfectText.setText(String.format(Locale.US,"%04d",intent.getIntExtra("perfect",0)));
         resultGoodText.setText(String.format(Locale.US,"%04d",intent.getIntExtra("good",0)));

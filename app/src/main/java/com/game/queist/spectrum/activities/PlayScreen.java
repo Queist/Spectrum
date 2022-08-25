@@ -4,6 +4,7 @@ import android.content.Intent;
 import android.graphics.Color;
 import android.graphics.Point;
 import android.media.MediaPlayer;
+import android.net.Uri;
 import android.opengl.EGL14;
 import android.opengl.EGL15;
 import android.opengl.GLES30;
@@ -23,6 +24,7 @@ import android.widget.ImageButton;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
+import com.game.queist.spectrum.BuildConfig;
 import com.game.queist.spectrum.R;
 import com.game.queist.spectrum.chart.BitObject;
 import com.game.queist.spectrum.chart.Chart;
@@ -41,6 +43,7 @@ import com.game.queist.spectrum.utils.DataManager;
 import com.game.queist.spectrum.utils.Utility;
 import com.game.queist.spectrum.utils.Vector;
 
+import java.io.FileNotFoundException;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.LinkedList;
@@ -308,8 +311,17 @@ public class PlayScreen extends AppCompatActivity implements GLSurfaceView.Rende
         artist = intent.getStringExtra("artist");
         int fileID = this.getResources().getIdentifier(songName.toLowerCase().replace(" ","_") + "_" + difficulty, "raw", this.getPackageName());
         int songID = this.getResources().getIdentifier(songName.toLowerCase().replace(" ","_"), "raw", this.getPackageName());
-        chart = new Chart(this.getResources().openRawResource(fileID));
-        bgm = MediaPlayer.create(this,songID);
+        if (BuildConfig.DEV_MODE) chart = new Chart(Utility.readFile(songName.toLowerCase().replace(" ","_") + "_" + difficulty + ".txt"));
+        else chart = new Chart(this.getResources().openRawResource(fileID));
+        if (BuildConfig.DEV_MODE) {
+            try {
+                bgm = MediaPlayer.create(this,
+                        Uri.fromFile(Utility.getExternalStorageFile(songName.replace(" ", "_").toLowerCase(), "music")));
+            } catch (FileNotFoundException e) {
+                e.printStackTrace();
+            }
+        }
+        else bgm = MediaPlayer.create(this,songID);
         keySound = MediaPlayer.create(this, R.raw.key_sound);
         float volume = DataManager.getData(this).getSystemVolume();
         float music = DataManager.getData(this).getMusicVolume();
@@ -653,7 +665,14 @@ public class PlayScreen extends AppCompatActivity implements GLSurfaceView.Rende
         laneShape = new LaneShape(this, (float) RADIUS, (float) BASE_Z, (float) BLEND_RATE);
         blankingShape = new BlankingShape(this, (float) RADIUS, (float) BASE_Z, (float) BLEND_RATE);
         effectShape = new EffectShape(this, (float) OUTER, (float) RADIUS, 0.f);
-        bgShape = new BackgroundQuad(this, coverID);
+        if (BuildConfig.DEV_MODE) {
+            try {
+                bgShape = new BackgroundQuad(this, Utility.getExternalStorageFile(songName.replace(" ", "_").toLowerCase(), "image").getAbsolutePath());
+            } catch (FileNotFoundException e) {
+                e.printStackTrace();
+            }
+        }
+            else bgShape = new BackgroundQuad(this, coverID);
 
         noteShape.initialize();
         laneShape.initialize();
