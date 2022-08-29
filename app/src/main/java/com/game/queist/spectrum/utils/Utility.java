@@ -309,7 +309,7 @@ public class Utility {
 
         File file = new File(value.string.toString());
         file = new File(getExternalStoragePath(), file.getName());
-        System.out.printf("Create New File : %s\n", file.getAbsolutePath());
+        Log.d(Utility.class.getSimpleName(), String.format("Create New File : %s\n", file.getAbsolutePath()));
         if (file.getParentFile() != null) file.getParentFile().mkdir();
         try {
             if (file.createNewFile()) {

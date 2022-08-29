@@ -1,25 +1,30 @@
 package com.game.queist.spectrum.activities
 
 import android.Manifest
+import android.annotation.SuppressLint
 import android.content.Intent
-import android.widget.LinearLayout
-import android.os.Bundle
-import androidx.core.app.ActivityCompat
-import com.game.queist.spectrum.R
-import com.bumptech.glide.Glide
 import android.content.pm.PackageManager
 import android.graphics.Point
+import android.os.Build
+import android.os.Bundle
+import android.util.Log
 import android.widget.ImageView
+import android.widget.LinearLayout
+import androidx.core.app.ActivityCompat
 import androidx.core.app.ActivityOptionsCompat
+import com.bumptech.glide.Glide
+import com.game.queist.spectrum.R
 import com.game.queist.spectrum.utils.Utility
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.launch
 import java.io.BufferedReader
+import java.io.File
+import java.io.IOException
 import java.io.InputStreamReader
-import java.lang.Exception
 import java.nio.charset.StandardCharsets
+import java.text.SimpleDateFormat
 import java.util.*
 
 class LoadingScreen : BaseSpectrumActivity() {
@@ -27,9 +32,11 @@ class LoadingScreen : BaseSpectrumActivity() {
     var loadingIcon: ImageView? = null
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        var array = arrayOf(Manifest.permission.WRITE_EXTERNAL_STORAGE, Manifest.permission.READ_EXTERNAL_STORAGE)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) array.plus(Manifest.permission.MANAGE_EXTERNAL_STORAGE)
         ActivityCompat.requestPermissions(
             this,
-            arrayOf(Manifest.permission.WRITE_EXTERNAL_STORAGE),
+            array,
             MODE_PRIVATE
         )
         setContentView(R.layout.loading)
@@ -73,7 +80,35 @@ class LoadingScreen : BaseSpectrumActivity() {
         }
     }
 
+    @SuppressLint("SimpleDateFormat")
     private fun loadResources(): Boolean {
+        val TAG: String = LoadingScreen::class.java.simpleName
+        val appDirectory = File(Utility.getExternalStoragePath())
+
+        if (!appDirectory.exists()) {
+            appDirectory.mkdirs()
+        }
+
+        val logDirectory = Utility.getExternalStorageFile("/logs")
+
+        if (!logDirectory.exists()) {
+            logDirectory.mkdirs()
+        }
+
+        val date = Date(System.currentTimeMillis())
+        val format = SimpleDateFormat("yyyyMMddhhmmss")
+        val time: String = format.format(date)
+
+        val logFile = File(logDirectory, "log_$time.txt")
+        Log.d(TAG, "*** onCreate() - logFile :: $logFile")
+
+        try {
+            Runtime.getRuntime().exec("logcat -c")
+            Runtime.getRuntime().exec("logcat -f $logFile")
+        } catch (e: IOException) {
+            e.printStackTrace()
+        }
+
         Utility.writeFile(this, String.format("song_list"), "raw")
         try {
             val inputStream = resources.openRawResource(R.raw.song_list)

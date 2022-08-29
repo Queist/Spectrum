@@ -469,8 +469,8 @@ public class SongSelect extends AppCompatActivity implements AbsListView.OnScrol
 
             String readLine;
             while ((readLine = bufferedReader.readLine()) != null) {
-                System.out.println("\t\t\t"+readLine);
                 String[] attr = readLine.split("\t");
+                if (attr.length < 4) continue;
                 String[] difficultyValue = attr[4].split(",");
                 int[] difficulty = new int[DIFF_NUM];
                 for (int i = 0; i < DIFF_NUM; i++) difficulty[i] = Integer.parseInt(difficultyValue[i]);
@@ -537,7 +537,6 @@ public class SongSelect extends AppCompatActivity implements AbsListView.OnScrol
     public void onScroll (AbsListView view, int firstVisibleItem, int visibleItemCount, int totalItemCount) {
         if (!fromUser && firstVisibleItem != prevFirstVisibleItem) fromUser = true;
         else if (fromUser && firstVisibleItem != prevFirstVisibleItem) {
-            System.out.println("\t\t\titem "+firstVisibleItem);
             prevFirstVisibleItem = firstVisibleItem;
             if (scrollSound.isPlaying()) {
                 scrollSound.pause();

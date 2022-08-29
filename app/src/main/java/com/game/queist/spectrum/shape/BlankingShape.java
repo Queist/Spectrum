@@ -35,7 +35,6 @@ public class BlankingShape extends LaneShape {
         createTexture("None", R.drawable.texture_none);
     }
 
-    @Override
     public void draw() {
         float[][] worlds = new float[1][16];
         Matrix.setIdentityM(worlds[0], 0);

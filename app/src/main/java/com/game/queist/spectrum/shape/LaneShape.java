@@ -104,11 +104,14 @@ public class LaneShape extends Shape {
       GLES30.glDisableVertexAttribArray(colorHandle);
    }
 
-   public void draw() {
+   public void draw(double rotateAngle) {
       float[][] worlds = new float[1][16];
       Matrix.setIdentityM(worlds[0], 0);
       setWorlds(worlds);
-      setTexTransforms(worlds);
+      float[][] texTransforms = new float[1][16];
+      Matrix.setIdentityM(texTransforms[0], 0);
+      Matrix.translateM(texTransforms[0], 0, (float) -(rotateAngle / Math.PI - Math.floor(rotateAngle / Math.PI)), 0, 0);
+      setTexTransforms(texTransforms);
       setTextures(new String[]{"Lane"});
       draw(1, new int[]{0}, new int[]{indices.length});
    }

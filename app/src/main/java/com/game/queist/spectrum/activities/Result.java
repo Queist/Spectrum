@@ -7,6 +7,7 @@ import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
+import android.util.Log;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.WindowInsets;
@@ -143,7 +144,6 @@ public class Result extends AppCompatActivity {
         int ID = getResources().getIdentifier("result_"+difficulty.toLowerCase(), "drawable", this.getPackageName());
         resultDifficulty.setImageResource(ID);
         ID = getResources().getIdentifier("result_"+ Utility.scoreToRank(score), "drawable", this.getPackageName());
-        System.out.println("\t\t\t"+Utility.scoreToRank(score));
         resultRank.setImageResource(ID);
         if (BuildConfig.DEV_MODE) {
             try {
@@ -175,7 +175,6 @@ public class Result extends AppCompatActivity {
         int prevBestScore = DataManager.getData(this).getScore(songName, Utility.difficultyToInteger(difficulty.toLowerCase()));
         if (prevBestScore < score) {
             DataManager.getData(this).setScore(songName, score, Utility.difficultyToInteger(difficulty.toLowerCase()));
-            System.out.println("\t\t\tdiff"+Utility.difficultyToInteger(difficulty.toLowerCase()));
             bestScore = score;
             handler.postDelayed(() -> resultIsNew.setVisibility(View.VISIBLE), 2500);
         }
@@ -280,7 +279,7 @@ public class Result extends AppCompatActivity {
         if (Build.VERSION.SDK_INT > 27) {
             getWindow().getAttributes().layoutInDisplayCutoutMode = WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES;
         }
-        System.out.println(finishFlag);
+        Log.d(Result.class.getSimpleName(), ""+finishFlag);
         if (bgm != null && !finishFlag && !bgm.isPlaying()) bgm.start();
         super.onResume();
     }

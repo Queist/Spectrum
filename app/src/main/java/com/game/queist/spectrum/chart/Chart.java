@@ -82,7 +82,6 @@ public class Chart {
 
             while ((readLine = bufferedReader.readLine()) != null) {
                 String[] attr = readLine.split("\t");
-                System.out.println(attr[0]);
                 switch (attr[0]) {
                     case "Offset":
                         offset = Integer.parseInt(attr[1]);
@@ -139,7 +138,7 @@ public class Chart {
                         break;
 
                     default:
-                        throw new Exception("Error in Parsing Spectrum Chart Body");
+                        break;
                 }
             }
 

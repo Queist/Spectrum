@@ -146,7 +146,6 @@ public class NoteShape extends Shape {
       String[] textures = new String[count];
 
       for (int i = 0; i < count; i++) {
-         System.out.println("\t\t\t\t\tHello");
          startOffset[i] = 0;
          length[i] = indices.length;
 

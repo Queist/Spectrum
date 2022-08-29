@@ -13,9 +13,9 @@ uniform vec3 fresnelR0;
 uniform sampler2D texture1;
 uniform mat4 texTransform;
 
-layout (location = 0) in vec3 f_Normal;
-layout (location = 1) in vec2 f_TexCoords;
-layout (location = 2) in vec4 f_VPosition;
+in vec3 f_Normal;
+in vec2 f_TexCoords;
+in vec4 f_VPosition;
 
 out vec4 fragColor;
 

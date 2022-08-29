@@ -644,7 +644,6 @@ public class PlayScreen extends AppCompatActivity implements GLSurfaceView.Rende
                 break;
 
             default :
-                System.out.println("\t\t\tERROR!!!");
                 break;
         }
     }
@@ -713,7 +712,7 @@ public class PlayScreen extends AppCompatActivity implements GLSurfaceView.Rende
         reduceNote();
         gatherRenderObjects();
         cull();
-        laneShape.draw();
+        laneShape.draw(rotateAngle);
         blankingShape.draw();
         bgShape.draw();
 
