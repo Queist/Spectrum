@@ -43,7 +43,9 @@ vec3 BlinnPhong(vec3 lightStrength, vec3 lightVec, vec3 normal, vec3 toEye, floa
 }
 
 void main() {
-    vec4 finalColor = vec4(f_Color, 1.0);
+    vec4 finalColor;
+    vec4 textureColor = texture(texture1, (texTransform * vec4(f_TexCoords, 1.0, 1.0)).xy);
+    finalColor = vec4(f_Color, 1.0f) + textureColor * 0.5f;
 
     if (finalColor.w < 0.05) discard;
 
@@ -59,7 +61,7 @@ void main() {
         vec3 strength = max(dot(-dist, normal), 0.0) * (dampling * lightColor[i]);
         result += BlinnPhong(strength, -dist, normal, toEye, shininess, fresnelR0, finalColor.xyz);
     }
-    result = result + 0.2 * finalColor.xyz;
+    result = result + 0.05 * finalColor.xyz;
     fragColor = vec4(result, 1.0);
     gl_FragDepth = floor(gl_FragCoord.z * 24.0) / 24.0;
 }

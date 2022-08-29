@@ -154,15 +154,13 @@ public class Chart {
                     recentMeanPos = helper.get(i).first;
                 }
                 else if (isLegacy) {
-                    if (recentMeanPos != helper.get(i).first && (equivalenceLines.isEmpty() ||
-                            equivalenceLines.get(equivalenceLines.size() - 1).getBit() != recentBit))
+                    if (equivalenceLines.isEmpty() ||
+                            equivalenceLines.get(equivalenceLines.size() - 1).getBit() != recentBit)
                         equivalenceLines.add(new EquivalenceLine(recentBit));
                 }
                 else {
-                    double mult = Math.floor((recentMeanPos - helper.get(i).first) / 360.0);
-                    double diff = recentMeanPos - helper.get(i).first - mult * 360.0;
-                    if ((diff < 90.0 || diff > 270.0) && (equivalenceLines.isEmpty() ||
-                            equivalenceLines.get(equivalenceLines.size() - 1).getBit() != recentBit))
+                    if (equivalenceLines.isEmpty() ||
+                            equivalenceLines.get(equivalenceLines.size() - 1).getBit() != recentBit)
                         equivalenceLines.add(new EquivalenceLine(recentBit));
                 }
             }

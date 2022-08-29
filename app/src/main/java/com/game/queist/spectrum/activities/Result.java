@@ -52,7 +52,7 @@ public class Result extends AppCompatActivity {
     String artist;
     int diffNum;
     int coverID;
-    boolean finishFlag;
+    boolean finishFlag = true;
 
     Handler handler;
 
@@ -280,7 +280,8 @@ public class Result extends AppCompatActivity {
         if (Build.VERSION.SDK_INT > 27) {
             getWindow().getAttributes().layoutInDisplayCutoutMode = WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES;
         }
-        if (bgm != null && !bgm.isPlaying()) bgm.start();
+        System.out.println(finishFlag);
+        if (bgm != null && !finishFlag && !bgm.isPlaying()) bgm.start();
         super.onResume();
     }
 

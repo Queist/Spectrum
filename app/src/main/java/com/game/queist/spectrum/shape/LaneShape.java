@@ -4,6 +4,7 @@ import android.content.Context;
 import android.opengl.GLES30;
 import android.opengl.Matrix;
 
+import com.game.queist.spectrum.R;
 import com.game.queist.spectrum.activities.PlayScreen;
 import com.game.queist.spectrum.chart.Note;
 import com.game.queist.spectrum.utils.ShapeUtils;
@@ -54,6 +55,8 @@ public class LaneShape extends Shape {
       texCoords = ShapeUtils.buildCylinderTexCoords();
 
       indices = ShapeUtils.buildCylinderIndices();
+
+      createTexture("Lane", R.drawable.lane);
    }
 
    @Override
@@ -106,7 +109,7 @@ public class LaneShape extends Shape {
       Matrix.setIdentityM(worlds[0], 0);
       setWorlds(worlds);
       setTexTransforms(worlds);
-      setTextures(new String[]{Note.TAB});
+      setTextures(new String[]{"Lane"});
       draw(1, new int[]{0}, new int[]{indices.length});
    }
 }

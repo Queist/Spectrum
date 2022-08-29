@@ -128,7 +128,7 @@ public class ShapeUtils {
       }
       vertices[3 * LEVEL_OF_DETAIL + 3] = 0.f;
       vertices[3 * LEVEL_OF_DETAIL + 4] = 0.f;
-      vertices[3 * LEVEL_OF_DETAIL + 5] = depth + radius;
+      vertices[3 * LEVEL_OF_DETAIL + 5] = depth;// + radius;
       return vertices;
    }
 
@@ -192,9 +192,9 @@ public class ShapeUtils {
    public static float[] buildConeNormals() {
       float[] normals = new float[(LEVEL_OF_DETAIL + 2) * 3];
       for (int i = 0; i < LEVEL_OF_DETAIL + 1; i++) {
-         normals[3 * i    ] = -(float)Math.cos(2 * Math.PI / LEVEL_OF_DETAIL * i);
-         normals[3 * i + 1] = -(float)Math.sin(2 * Math.PI / LEVEL_OF_DETAIL * i);
-         normals[3 * i + 2] = 0.f;
+         normals[3 * i    ] = 0.f;//-(float)Math.cos(2 * Math.PI / LEVEL_OF_DETAIL * i);
+         normals[3 * i + 1] = 0.f;//-(float)Math.sin(2 * Math.PI / LEVEL_OF_DETAIL * i);
+         normals[3 * i + 2] = -1.f;
       }
       normals[3 * LEVEL_OF_DETAIL + 3] = 0.f;
       normals[3 * LEVEL_OF_DETAIL + 4] = 0.f;

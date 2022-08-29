@@ -686,7 +686,7 @@ public class PlayScreen extends AppCompatActivity implements GLSurfaceView.Rende
         Shape.setLight(new float[]{
                 0.f, 0.f, -5.f,
                 0.f, 0.f, 40.f,
-                0.f, 0.f, 20.f,
+                0.f, 0.f, -5.f,
         }, new float[]{
                 00.f, 00.f, 00.f,
                 0.f, 0.f, 0.f,
